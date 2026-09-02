@@ -1,0 +1,8 @@
+/* Small touch and safe-area refinements for iPhone Home Screen mode. */
+body{-webkit-tap-highlight-color:transparent}
+.form-help{margin:-5px 0 20px}
+@supports (padding: max(0px)){
+  .sidebar{padding-top:max(15px,env(safe-area-inset-top));padding-bottom:max(15px,env(safe-area-inset-bottom))}
+  main{padding-bottom:max(70px,calc(28px + env(safe-area-inset-bottom)))}
+}
+@media (max-width:560px){button,.nav{min-height:44px}.toolbar .quiet{min-height:38px}.form-actions .primary,.form-actions .quiet{min-height:44px}}
