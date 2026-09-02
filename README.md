@@ -1,25 +1,26 @@
-# Trade Ledger — iPhone setup
+# Trade Ledger
 
-This is an installable Progressive Web App. Put this whole folder on an HTTPS static host (GitHub Pages, Cloudflare Pages, Netlify, or your own web host). Safari enables installation and reliable offline storage only for a website served over HTTPS.
+An iPhone-first PWA backed by the Oracle ORDS Trading Journal API.
 
-When the site has a public HTTPS address:
+## iPhone installation
 
-1. Open it in **Safari** on your iPhone.
-2. Tap **Share** (the square with the upward arrow).
-3. Choose **Add to Home Screen**.
-4. Name it `Trade Ledger`, then tap **Add**.
+Deploy this folder to an HTTPS static host. Open the resulting URL in Safari on the iPhone, tap **Share**, then **Add to Home Screen**. The iPhone app uses the same remote trading-journal database, so no manual CSV import is needed.
 
-It will open like an app. Entries are stored on that specific device, so use **Export data** periodically as a backup. Import the backup or original CSV on a new device.
+## API mapping
 
-## Import and calculation rules
+The app reads all pages from `getTrades`, opens individual records with `getTrade/:id`, creates records with `createTrade`, and updates records with `PUT getTrade/:id`.
 
-The CSV's values are normalized during calculation:
+It sends JSON fields: `trade_on`, `trade_result`, `pl`, `charges`, `notes`, `trade_rules`, and `archived`.
 
-| Outcome | Trade P&L before charges | Net result |
-| --- | --- | --- |
-| WIN | positive amount | amount minus charges |
-| LOSS | positive amount | negative amount minus charges |
-| BREAKEVEN | ignored | negative charges only |
-| NO TRADE / MISSED OPPORTUNITY | ignored | no performance P&L |
+The form submits positive `pl` and `charges` amounts. The visualized net result is calculated as:
 
-Charges are always a cost, even when the CSV displays them as a negative number.
+- WIN: `pl - charges`
+- LOSS: `-pl - charges`
+- BREAKEVEN: `-charges`
+- NO TRADE / MISSED OPPORTUNITY: excluded from performance P&L
+
+## Required ORDS configuration
+
+Because this PWA will be hosted on a different HTTPS domain, ORDS must allow browser CORS requests from that exact deployed origin. Allow `GET`, `POST`, `PUT`, and the `Content-Type` request header; its OPTIONS preflight must respond successfully. Do not use `Access-Control-Allow-Origin: *` if the API will later require authentication—use your deployed site’s exact URL instead.
+
+For `POST` and `PUT`, return either JSON or an empty successful response with status `201` / `200`. The app accepts either, but error responses should return a meaningful body and a 4xx/5xx status.

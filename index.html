@@ -1,51 +1,6 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#0b1220" />
-  <meta name="description" content="A private, offline-first trading journal." />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Trade Ledger" />
-  <link rel="apple-touch-icon" href="icon.svg" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="ios.css" />
-  <title>Trade Ledger</title>
-</head>
-<body>
-  <aside class="sidebar">
-    <a class="brand" href="#dashboard"><span class="brand-mark">↗</span><span>Trade<br><b>Ledger</b></span></a>
-    <nav aria-label="Main navigation">
-      <button class="nav active" data-page="dashboard">Overview</button>
-      <button class="nav" data-page="trades">Trade log</button>
-      <button class="nav" data-page="journal">Journal</button>
-      <button class="nav" data-page="new">+ Log trade</button>
-    </nav>
-    <div class="sidebar-foot"><span class="dot"></span>Stored privately on this device</div>
-  </aside>
-  <main>
-    <header><div><p class="eyebrow" id="today"></p><h1 id="page-title">Overview</h1></div><button class="primary" data-page="new">+ New entry</button></header>
-
-    <section id="dashboard" class="page active">
-      <div class="toolbar"><label>Period <select id="period"><option value="all">All time</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select></label><button class="quiet" id="import-btn">Import CSV</button><input id="csv-input" type="file" accept=".csv,text/csv" hidden><button class="quiet" id="export-btn">Export data</button></div>
-      <div class="stats" id="stats"></div>
-      <div class="charts">
-        <article class="panel wide"><div class="panel-head"><div><p class="eyebrow">Performance</p><h2>Equity curve</h2></div><span id="equity-total" class="positive"></span></div><div id="equity-chart" class="chart" aria-label="Cumulative net profit and loss chart"></div></article>
-        <article class="panel"><div class="panel-head"><div><p class="eyebrow">Execution</p><h2>Outcomes</h2></div></div><div id="outcome-chart" class="donut-wrap"></div></article>
-        <article class="panel"><div class="panel-head"><div><p class="eyebrow">Discipline</p><h2>Journal coverage</h2></div></div><div id="discipline"></div></article>
-      </div>
-      <article class="panel"><div class="panel-head"><div><p class="eyebrow">Latest activity</p><h2>Recent entries</h2></div><button class="link" data-page="trades">See all</button></div><div id="recent"></div></article>
-    </section>
-
-    <section id="trades" class="page"><div class="filter-row"><label>Outcome <select id="outcome-filter"><option value="ALL">All entries</option><option>WIN</option><option>LOSS</option><option>BREAKEVEN</option><option>NO TRADE</option><option>MISSED OPPORTUNITY</option></select></label><input id="search" type="search" placeholder="Search journal notes"></div><div class="panel table-panel"><div id="trade-table"></div></div></section>
-    <section id="journal" class="page"><div class="journal-layout"><div class="panel"><p class="eyebrow">Reflection library</p><h2>Your trading journal</h2><p class="muted">Search and revisit the decisions behind every result.</p><input id="journal-search" type="search" placeholder="Search notes, rules, outcome…"><div id="journal-list" class="journal-list"></div></div><article class="panel journal-detail" id="journal-detail"><p class="muted">Select an entry to read your journal.</p></article></div></section>
-    <section id="new" class="page"><div class="form-shell panel"><p class="eyebrow">New journal entry</p><h2>Log the trade while it is fresh</h2><form id="trade-form"><input type="hidden" id="entry-id"><div class="form-grid"><label>Date & time<input id="trade-date" type="datetime-local" required></label><label>Outcome<select id="trade-outcome" required><option>WIN</option><option>LOSS</option><option>BREAKEVEN</option><option>NO TRADE</option><option>MISSED OPPORTUNITY</option></select></label><label>Trade P&amp;L before charges (₹)<input id="trade-pnl" type="number" step="0.01" min="0" placeholder="e.g. 1300"></label><label>Charges (₹)<input id="trade-charges" type="number" step="0.01" min="0" value="0"></label></div><p class="muted form-help">Enter positive values. Outcome sets P&amp;L direction: Win is positive, Loss is negative, and Breakeven is ₹0. Charges are always deducted.</p><label>Journal notes<textarea id="trade-notes" rows="8" placeholder="What did you see, decide, feel, and learn?"></textarea></label><label>Rules / playbook<textarea id="trade-rules" rows="7" placeholder="Which rules applied? Were they followed?"></textarea></label><div class="form-actions"><button type="button" class="quiet" id="cancel-edit">Cancel</button><button class="primary" type="submit">Save entry</button></div></form></div></section>
-  </main>
-  <dialog id="detail-modal"><button class="close" id="modal-close" aria-label="Close">×</button><div id="modal-content"></div></dialog>
-  <template id="empty"><div class="empty"><b>No entries yet</b><span>Log a trade or import a CSV to get started.</span></div></template>
-  <script src="app.js"></script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#09101d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Trade Ledger"><meta name="description" content="Private trading journal"><link rel="apple-touch-icon" href="icon.svg"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="refinements.css"><title>Trade Ledger</title></head><body>
+<main class="app"><header class="topbar"><div><p id="today" class="kicker"></p><h1 id="title">Overview</h1></div><button id="refresh" class="icon-btn" aria-label="Refresh data">↻</button></header><p id="connection" class="connection" role="status">Connecting to journal…</p>
+<section id="overview" class="screen active"><div class="range-row"><label>Period <select id="period"><option value="all">All time</option><option value="30">30 days</option><option value="90">90 days</option></select></label><button class="text-btn" data-screen="trades">View all</button></div><div id="stats" class="stats"></div><article class="card chart-card"><div class="card-title"><div><p class="kicker">Performance</p><h2>Net P&amp;L</h2></div><b id="net-total"></b></div><div id="equity" class="chart"></div></article><article class="card"><div class="card-title"><div><p class="kicker">Latest activity</p><h2>Recent entries</h2></div></div><div id="recent"></div></article></section>
+<section id="trades" class="screen"><div class="filter"><select id="archive-filter" aria-label="Archive status"><option value="ACTIVE">Active</option><option value="ARCHIVED">Archived</option><option value="ALL">All entries</option></select><select id="outcome-filter"><option value="ALL">All outcomes</option><option>WIN</option><option>LOSS</option><option>BREAKEVEN</option><option>NO TRADE</option><option>MISSED OPPORTUNITY</option></select></div><div class="filter"><input id="search" type="search" placeholder="Search notes"></div><div id="trade-list" class="trade-list"></div></section><section id="journal" class="screen"><div class="filter"><input id="journal-search" type="search" placeholder="Search reflections"></div><div id="journal-list" class="journal-list"></div></section>
+<section id="entry" class="screen"><article class="card form-card"><p class="kicker" id="form-mode">New entry</p><h2>Record your decision</h2><form id="trade-form"><input id="entry-id" type="hidden"><input id="entry-archived" type="hidden" value="N"><label>Date &amp; time<input id="trade-date" type="datetime-local" required></label><label>Outcome<select id="trade-outcome"><option>WIN</option><option>LOSS</option><option>BREAKEVEN</option><option>NO TRADE</option><option>MISSED OPPORTUNITY</option></select></label><div class="amounts"><label>Trade P&amp;L (₹)<input id="trade-pnl" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0"></label><label>Charges (₹)<input id="trade-charges" type="number" step="0.01" min="0" inputmode="decimal" value="0"></label></div><p class="hint">Enter positive amounts. Win adds P&amp;L; Loss deducts it; charges always deduct.</p><label>Reflection<textarea id="trade-notes" rows="8" placeholder="What did you see, decide, and learn?"></textarea></label><label>Rules / playbook<textarea id="trade-rules" rows="5" placeholder="Which rules applied?"></textarea></label><div class="actions"><button class="secondary" type="button" id="cancel">Cancel</button><button class="primary" type="submit">Save entry</button></div></form></article></section></main>
+<nav class="bottom-nav" aria-label="Main navigation"><button class="tab active" data-screen="overview"><span>⌂</span>Home</button><button class="tab" data-screen="trades"><span>≡</span>Trades</button><button class="new-tab" data-screen="entry" aria-label="Log trade">+</button><button class="tab" data-screen="journal"><span>▤</span>Journal</button></nav><dialog id="detail"><button class="dialog-close" id="close-detail" aria-label="Close">×</button><div id="detail-content"></div></dialog><script src="app.js"></script></body></html>
