@@ -123,6 +123,19 @@
     .toast-anim {
       animation: toastFade 3s ease forwards;
     }
+
+    /* The detail sheet remains fully within the iPhone viewport and scrolls independently. */
+    #detail-sheet {
+      height: min(82dvh, 720px);
+      max-height: calc(100dvh - env(safe-area-inset-top) - 12px);
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #detail-sheet > .py-4 { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+    #detail-sheet > .py-4 > .grid:last-child { position: sticky; bottom: 0; padding-top: 14px; background: linear-gradient(to bottom, transparent, #121927 18%); }
   </style>
 </head>
 <body class="bg-[#060913] text-slate-100 flex justify-center min-h-screen">
@@ -160,6 +173,9 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
+          </button>
+          <button id="rules-btn" class="tap-active p-2.5 rounded-2xl bg-slate-800/70 text-slate-200 border border-white/10 hover:bg-slate-700" aria-label="Edit default playbook rules">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56v.08h-3v-.08A1.7 1.7 0 0 0 10.66 18.7a1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 15.04a1.7 1.7 0 0 0-1.56-1.04h-.08v-3h.08A1.7 1.7 0 0 0 7 9.96a1.7 1.7 0 0 0-.34-1.88L6.6 8.02 8.72 5.9l.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.04-1.56v-.08h3v.08a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19.4 9.96 1.7 1.7 0 0 0 20.96 11h.08v3h-.08A1.7 1.7 0 0 0 19.4 15Z"/></svg>
           </button>
         </div>
       </div>
@@ -388,6 +404,14 @@
         </div>
       </section>
 
+      <section id="screen-rules" class="screen-panel hidden space-y-4">
+        <div class="glass-card rounded-3xl p-5 border border-white/10 space-y-4">
+          <div class="border-b border-white/10 pb-3"><p class="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Default playbook</p><h2 class="text-lg font-black text-white">Trading Rules</h2><p class="text-xs text-slate-400 mt-1">Used automatically for each new journal entry.</p></div>
+          <textarea id="default-trade-rules" rows="18" class="w-full bg-slate-900/90 text-sm text-white rounded-2xl p-3.5 border border-white/10 focus:border-emerald-500 focus:outline-none resize-y"></textarea>
+          <button id="save-rules-btn" class="tap-active w-full py-3.5 rounded-2xl bg-slate-800 border border-white/10 text-emerald-300 font-bold text-sm">Save Default Rules</button>
+        </div>
+      </section>
+
     </main>
 
     <nav class="glass-nav fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 safe-bottom-padding px-3 pt-2">
@@ -484,7 +508,7 @@
         </div>
 
         <!-- Sheet Actions -->
-        <div class="grid grid-cols-2 gap-3 pt-2">
+        <div class="grid grid-cols-3 gap-2 pt-2">
           <button id="sheet-edit-btn" class="tap-active py-3 rounded-2xl bg-slate-800 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-slate-700">
             <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -496,6 +520,10 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
             </svg>
             <span id="archive-btn-text">Archive</span>
+          </button>
+          <button id="sheet-delete-btn" class="tap-active py-3 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-300 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-rose-500/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12m-9 4v6m6-6v6M9 7V4h6v3m-8 0 1 14h8l1-14"/></svg>
+            Delete
           </button>
         </div>
       </div>
@@ -518,6 +546,7 @@
     let calendarCursor = new Date();
     let analysisMode = 'daily';
     let currentDetailId = null;
+    let defaultTradeRules = '';
 
     // Helpers
     const $ = selector => document.querySelector(selector);
@@ -539,6 +568,14 @@
       if (abs >= 100000) return `${sign}₹${(abs / 100000).toFixed(1)}L`;
       if (abs >= 1000) return `${sign}₹${(abs / 1000).toFixed(1)}k`;
       return `${sign}₹${Math.round(abs)}`;
+    };
+
+    const formatChartAxis = val => {
+      const absolute = Math.abs(val);
+      const sign = val < 0 ? '-' : '';
+      if (absolute >= 100000) return `${sign}₹${(absolute / 100000).toFixed(1)}L`;
+      if (absolute >= 1000) return `${sign}₹${(absolute / 1000).toFixed(1)}k`;
+      return `${sign}₹${Math.round(absolute)}`;
     };
 
     const formatDate = d => new Intl.DateTimeFormat('en-IN', {
@@ -671,6 +708,34 @@
       renderAllViews();
     }
 
+    async function loadDefaultRules() {
+      try {
+        const response = await fetch(`${API}/traderule`, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        defaultTradeRules = data.items?.[0]?.rules || '';
+      } catch (_) {
+        defaultTradeRules = localStorage.getItem('trade_ledger_default_rules') || '';
+      }
+      $('#default-trade-rules').value = defaultTradeRules;
+    }
+
+    async function saveDefaultRules() {
+      const rules = $('#default-trade-rules').value.trim();
+      try {
+        setStatus('Saving rules…', 'syncing');
+        const response = await fetch(`${API}/traderule`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ rules }) });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        setStatus('Rules saved', 'online');
+        showToast('Default playbook updated', 'success');
+      } catch (_) {
+        showToast('Could not save rules to ORDS', 'error');
+        return;
+      }
+      defaultTradeRules = rules;
+      localStorage.setItem('trade_ledger_default_rules', rules);
+    }
+
     function navigateToScreen(targetScreenId) {
       triggerHaptic();
       $$('.screen-panel').forEach(panel => {
@@ -683,7 +748,8 @@
         'screen-trades': 'Trade Log',
         'screen-calendar': 'Calendar & P&L',
         'screen-journal': 'Trader Mindset',
-        'screen-entry': $('#form-entry-id').value ? 'Edit Entry' : 'Log Trade'
+        'screen-entry': $('#form-entry-id').value ? 'Edit Entry' : 'Log Trade',
+        'screen-rules': 'Playbook Rules'
       };
       $('#screen-title').textContent = screenTitles[targetScreenId] || 'Trade Ledger';
 
@@ -711,6 +777,7 @@
       const now = new Date();
       now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
       $('#field-trade-date').value = now.toISOString().slice(0, 16);
+      $('#field-trade-rules').value = defaultTradeRules;
       selectOutcomePill('WIN');
     }
 
@@ -832,7 +899,7 @@
       });
 
       const w = 600, h = 190;
-      const padL = 50, padR = 15, padT = 20, padB = 30;
+      const padL = 66, padR = 16, padT = 18, padB = 32;
 
       const minVal = Math.min(0, ...points.map(p => p.total));
       const maxVal = Math.max(0, ...points.map(p => p.total));
@@ -850,7 +917,7 @@
       // Y-axis grid marks
       const marks = [maxVal, (maxVal + minVal) / 2, minVal].map(val => `
         <line x1="${padL}" x2="${w - padR}" y1="${getY(val)}" y2="${getY(val)}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3 4"/>
-        <text x="${padL - 8}" y="${getY(val) + 4}" text-anchor="end" fill="#64748b" font-size="10" font-family="monospace">${Math.round(val / 1000)}k</text>
+        <text x="${padL - 10}" y="${getY(val)}" text-anchor="end" dominant-baseline="middle" fill="#94a3b8" font-size="10" font-family="monospace">${formatChartAxis(val)}</text>
       `).join('');
 
       // Build path data
@@ -873,8 +940,8 @@
         <path d="${areaData}" fill="url(#${areaGradientId})" />
         <path d="${pathData}" fill="none" stroke="${strokeColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         <!-- Start & End Date Labels -->
-        <text x="${padL}" y="${h - 8}" fill="#64748b" font-size="10" font-family="monospace">${formatDate(points[0].item.trade_on)}</text>
-        <text x="${w - padR}" y="${h - 8}" text-anchor="end" fill="#64748b" font-size="10" font-family="monospace">${formatDate(points.at(-1).item.trade_on)}</text>
+        <text x="${padL}" y="${h - 10}" fill="#94a3b8" font-size="9" font-family="monospace">${formatDate(points[0].item.trade_on)}</text>
+        <text x="${w - padR}" y="${h - 10}" text-anchor="end" fill="#94a3b8" font-size="9" font-family="monospace">${formatDate(points.at(-1).item.trade_on)}</text>
       `;
     }
 
@@ -1262,6 +1329,27 @@
       await loadAllTrades();
     }
 
+    async function deleteTradeRecord(id) {
+      const record = entries.find(x => String(x.id) === String(id));
+      if (!record) return;
+      if (!confirm(`Delete this ${record.trade_result} trade permanently? This cannot be undone.`)) return;
+      triggerHaptic();
+      try {
+        setStatus('Deleting trade…', 'syncing');
+        const response = await fetch(`${API}/getTrade/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        entries = entries.filter(x => String(x.id) !== String(id));
+        localStorage.setItem('trade_ledger_cache', JSON.stringify(entries));
+        closeDetailSheet();
+        setStatus('Trade deleted', 'online');
+        showToast('Trade deleted permanently', 'success');
+        renderAllViews();
+      } catch (_) {
+        setStatus('Delete failed', 'error');
+        showToast('Could not delete trade from ORDS', 'error');
+      }
+    }
+
     async function handleFormSubmit(e) {
       e.preventDefault();
       triggerHaptic();
@@ -1408,6 +1496,13 @@
         if (currentDetailId) toggleArchiveRecord(currentDetailId);
       });
 
+      $('#sheet-delete-btn').addEventListener('click', () => {
+        if (currentDetailId) deleteTradeRecord(currentDetailId);
+      });
+
+      $('#rules-btn').addEventListener('click', () => navigateToScreen('screen-rules'));
+      $('#save-rules-btn').addEventListener('click', saveDefaultRules);
+
       // Refresh button
       $('#refresh-btn').addEventListener('click', () => {
         triggerHaptic();
@@ -1423,6 +1518,7 @@
 
       setupEventListeners();
       resetFormToDefaults();
+      loadDefaultRules();
       loadAllTrades();
     }
 
