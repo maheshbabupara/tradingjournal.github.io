@@ -105,12 +105,12 @@
     }
 
     @keyframes sheetSlideUp {
-      from { transform: translateY(100%); opacity: 0.6; }
-      to { transform: translateY(0); opacity: 1; }
+      from { transform: translate(-50%, 100%); opacity: 0.6; }
+      to { transform: translate(-50%, 0); opacity: 1; }
     }
     @keyframes sheetSlideDown {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(100%); opacity: 0; }
+      from { transform: translate(-50%, 0); opacity: 1; }
+      to { transform: translate(-50%, 100%); opacity: 0; }
     }
 
     /* Toast animation */
@@ -134,6 +134,7 @@
       flex-direction: column;
       overflow: hidden;
     }
+    #detail-sheet.hidden { display: none; }
     #detail-sheet > .py-4 { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
     #detail-sheet > .py-4 > .grid:last-child { position: sticky; bottom: 0; padding-top: 14px; background: linear-gradient(to bottom, transparent, #121927 18%); }
   </style>
@@ -176,6 +177,9 @@
           </button>
           <button id="rules-btn" class="tap-active p-2.5 rounded-2xl bg-slate-800/70 text-slate-200 border border-white/10 hover:bg-slate-700" aria-label="Edit default playbook rules">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56v.08h-3v-.08A1.7 1.7 0 0 0 10.66 18.7a1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 15.04a1.7 1.7 0 0 0-1.56-1.04h-.08v-3h.08A1.7 1.7 0 0 0 7 9.96a1.7 1.7 0 0 0-.34-1.88L6.6 8.02 8.72 5.9l.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.04-1.56v-.08h3v.08a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19.4 9.96 1.7 1.7 0 0 0 20.96 11h.08v3h-.08A1.7 1.7 0 0 0 19.4 15Z"/></svg>
+          </button>
+          <button id="export-csv-btn" class="tap-active p-2.5 rounded-2xl bg-slate-800/70 text-slate-200 border border-white/10 hover:bg-slate-700" aria-label="Download trades as CSV">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
           </button>
         </div>
       </div>
@@ -734,6 +738,26 @@
       }
       defaultTradeRules = rules;
       localStorage.setItem('trade_ledger_default_rules', rules);
+    }
+
+    function downloadTradesCsv() {
+      const headers = ['id', 'trade_on', 'trade_result', 'pl', 'charges', 'net_pl', 'notes', 'trade_rules', 'archived'];
+      const quote = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+      const rows = getSortedEntries(entries).map(entry => [
+        entry.id, entry.trade_on, entry.trade_result, Math.abs(Number(entry.pl) || 0),
+        Math.abs(Number(entry.charges) || 0), getNetValue(entry), entry.notes, entry.trade_rules, entry.archived || 'N'
+      ].map(quote).join(','));
+      const csv = [headers.join(','), ...rows].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `trade-ledger-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast('CSV download started', 'success');
     }
 
     function navigateToScreen(targetScreenId) {
@@ -1502,6 +1526,7 @@
 
       $('#rules-btn').addEventListener('click', () => navigateToScreen('screen-rules'));
       $('#save-rules-btn').addEventListener('click', saveDefaultRules);
+      $('#export-csv-btn').addEventListener('click', downloadTradesCsv);
 
       // Refresh button
       $('#refresh-btn').addEventListener('click', () => {
