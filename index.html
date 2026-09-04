@@ -60,6 +60,22 @@
       touch-action: pan-x pan-y;
     }
 
+    .calendar-chart-tooltip {
+      position: absolute;
+      z-index: 20;
+      max-width: 180px;
+      padding: 7px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 9px;
+      background: rgba(6, 9, 19, 0.96);
+      color: #f8fafc;
+      font: 11px/1.35 'JetBrains Mono', monospace;
+      pointer-events: none;
+      white-space: nowrap;
+      transform: translate(-50%, calc(-100% - 10px));
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
+
     #calendar-chart-scroll {
       min-width: 0;
       overscroll-behavior-x: contain;
@@ -352,7 +368,7 @@
             <button data-chart-type="line" class="chart-type-toggle flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-emerald-500 text-slate-950">Line</button>
             <button data-chart-type="candle" class="chart-type-toggle flex-1 py-1.5 text-xs font-medium text-slate-400 rounded-lg transition-all hover:text-white">Candle</button>
           </div>
-          <div id="analysis-bars-chart" class="max-h-[260px] border-b border-white/10 overflow-y-auto overscroll-y-contain"></div>
+          <div id="analysis-bars-chart" class="max-h-[460px] border-b border-white/10 overflow-y-auto overscroll-y-contain"></div>
           <div id="analysis-breakdown-list" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
         </div>
       </section>
@@ -1144,7 +1160,7 @@
         const points = chronological;
         const availableWidth = Math.max(240, chartContainer.clientWidth - 52);
         const width = Math.max(availableWidth, points.length * 42) * calendarChartZoom;
-        const height = Math.max(250, Math.min(380, 220 + Math.round(points.length * 2)));
+        const height = Math.max(320, Math.min(460, 280 + Math.round(points.length * 3)));
         const padLeft = 8;
         const padRight = 12;
         const padTop = 28;
@@ -1165,19 +1181,20 @@
           return { point, open, close, high: Math.max(open, close), low: Math.min(open, close) };
         });
         const chart = calendarChartType === 'line'
-          ? `<path d="${candles.map((candle, index) => `${index ? 'L' : 'M'}${x(index)},${y(candle.close)}`).join(' ')}" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`
+          ? `<path d="${candles.map((candle, index) => `${index ? 'L' : 'M'}${x(index)},${y(candle.close)}`).join(' ')}" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><g>${candles.map((candle, index) => `<circle class="calendar-chart-point" cx="${x(index)}" cy="${y(candle.close)}" r="8" fill="transparent" data-label="${escapeHtml(candle.point.label)}" data-total="${candle.point.total}" data-count="${candle.point.count}"/><circle cx="${x(index)}" cy="${y(candle.close)}" r="3" fill="#38bdf8"/>`).join('')}</g>`
           : candles.map((candle, index) => {
             const color = candle.close >= candle.open ? '#34d399' : '#fb7185';
             const bodyTop = Math.min(y(candle.open), y(candle.close));
             const bodyHeight = Math.max(2, Math.abs(y(candle.close) - y(candle.open)));
             const candleWidth = Math.min(24, Math.max(8, (width - padLeft - padRight) / Math.max(1, points.length) * 0.5));
-            return `<g><line x1="${x(index)}" x2="${x(index)}" y1="${y(candle.high)}" y2="${y(candle.low)}" stroke="${color}" stroke-width="1.5"/><rect x="${x(index) - candleWidth / 2}" y="${bodyTop}" width="${candleWidth}" height="${bodyHeight}" rx="2" fill="${color}" fill-opacity=".9"><title>${escapeHtml(candle.point.label)}: ${formatCurrency(candle.point.total)} (${candle.point.count} ${candle.point.count === 1 ? 'trade' : 'trades'})</title></rect></g>`;
+            return `<g class="calendar-chart-point" data-label="${escapeHtml(candle.point.label)}" data-total="${candle.point.total}" data-count="${candle.point.count}"><line x1="${x(index)}" x2="${x(index)}" y1="${y(candle.high)}" y2="${y(candle.low)}" stroke="${color}" stroke-width="1.5"/><rect x="${x(index) - candleWidth / 2}" y="${bodyTop}" width="${candleWidth}" height="${bodyHeight}" rx="2" fill="${color}" fill-opacity=".9"><title>${escapeHtml(candle.point.label)}: ${formatCurrency(candle.point.total)} (${candle.point.count} ${candle.point.count === 1 ? 'trade' : 'trades'})</title></rect></g>`;
           }).join('');
         const plotSvg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${labels[analysisMode]} net profit and loss ${calendarChartType} chart"><title>${labels[analysisMode]} net profit and loss ${calendarChartType} chart</title>${grid}<line x1="${padLeft}" x2="${width - padRight}" y1="${zeroY}" y2="${zeroY}" stroke="#cbd5e1" stroke-opacity=".65" stroke-width="1.5"/>${chart}<text x="${padLeft}" y="${height - 8}" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points[0], analysisMode))}</text><text x="${width - padRight}" y="${height - 8}" text-anchor="end" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points.at(-1), analysisMode))}</text></svg>`;
         const axisSvg = `<svg width="52" height="${height}" viewBox="0 0 52 ${height}" aria-hidden="true"><line x1="51" x2="51" y1="${padTop}" y2="${height - padBottom}" stroke="#475569"/>${axis}</svg>`;
-        chartContainer.innerHTML = `<div class="grid grid-cols-[52px_minmax(0,1fr)]" style="height:${height}px"><div class="sticky left-0 z-10 bg-slate-950/70">${axisSvg}</div><div id="calendar-chart-scroll" class="overflow-x-auto overflow-y-hidden overscroll-x-contain">${plotSvg}</div></div>`;
+        chartContainer.innerHTML = `<div class="grid grid-cols-[52px_minmax(0,1fr)]" style="height:${height}px"><div class="sticky left-0 z-10 bg-slate-950/70">${axisSvg}</div><div id="calendar-chart-scroll" class="relative overflow-x-auto overflow-y-hidden overscroll-x-contain">${plotSvg}<div class="calendar-chart-tooltip hidden" role="status"></div></div></div>`;
       }
       bindCalendarChartPinch(chartContainer);
+      bindCalendarChartHover(chartContainer);
       const scrollToLatest = () => {
         const scroll = $('#calendar-chart-scroll');
         if (scroll) scroll.scrollLeft = scroll.scrollWidth - scroll.clientWidth;
@@ -1241,6 +1258,28 @@
       };
       chartContainer.addEventListener('touchend', finishPinch, { passive: true });
       chartContainer.addEventListener('touchcancel', finishPinch, { passive: true });
+    }
+
+    function bindCalendarChartHover(chartContainer) {
+      if (chartContainer.dataset.hoverBound === 'true') return;
+      chartContainer.dataset.hoverBound = 'true';
+      chartContainer.addEventListener('pointermove', event => {
+        const point = event.target.closest('.calendar-chart-point');
+        const scroll = $('#calendar-chart-scroll');
+        const tooltip = scroll?.querySelector('.calendar-chart-tooltip');
+        if (!point || !scroll || !tooltip) {
+          tooltip?.classList.add('hidden');
+          return;
+        }
+        const bounds = scroll.getBoundingClientRect();
+        tooltip.textContent = `${point.dataset.label}: ${formatCurrency(Number(point.dataset.total))} | ${point.dataset.count} ${point.dataset.count === '1' ? 'trade' : 'trades'}`;
+        tooltip.style.left = `${event.clientX - bounds.left + scroll.scrollLeft}px`;
+        tooltip.style.top = `${event.clientY - bounds.top + scroll.scrollTop}px`;
+        tooltip.classList.remove('hidden');
+      });
+      chartContainer.addEventListener('pointerleave', () => {
+        $('#calendar-chart-scroll .calendar-chart-tooltip')?.classList.add('hidden');
+      });
     }
 
     function calculatePeriodGroups(mode, list) {
