@@ -46,7 +46,12 @@
       width: 100%;
       min-width: 0;
       max-width: 100%;
-      font-size: 16px;
+      box-sizing: border-box;
+      min-inline-size: 0;
+      padding-inline: 12px;
+      font-size: 14px;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     #analysis-bars-chart {
@@ -346,14 +351,6 @@
           <div class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-white/10" role="group" aria-label="Chart type">
             <button data-chart-type="line" class="chart-type-toggle flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-emerald-500 text-slate-950">Line</button>
             <button data-chart-type="candle" class="chart-type-toggle flex-1 py-1.5 text-xs font-medium text-slate-400 rounded-lg transition-all hover:text-white">Candle</button>
-          </div>
-          <div class="flex items-center justify-between">
-            <span id="calendar-chart-zoom-label" class="text-[10px] font-mono text-slate-400">100%</span>
-            <div class="flex items-center gap-1" role="group" aria-label="Chart zoom">
-              <button id="calendar-chart-zoom-out" class="tap-active w-8 h-8 rounded-lg border border-white/10 bg-slate-900/80 text-lg text-slate-300" aria-label="Zoom out">−</button>
-              <button id="calendar-chart-zoom-reset" class="tap-active px-2 h-8 rounded-lg border border-white/10 bg-slate-900/80 text-[10px] font-bold text-slate-300">Reset</button>
-              <button id="calendar-chart-zoom-in" class="tap-active w-8 h-8 rounded-lg border border-white/10 bg-slate-900/80 text-lg text-slate-300" aria-label="Zoom in">+</button>
-            </div>
           </div>
           <div id="analysis-bars-chart" class="max-h-[260px] border-b border-white/10 overflow-y-auto overscroll-y-contain"></div>
           <div id="analysis-breakdown-list" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
@@ -1179,7 +1176,6 @@
         const plotSvg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${labels[analysisMode]} net profit and loss ${calendarChartType} chart"><title>${labels[analysisMode]} net profit and loss ${calendarChartType} chart</title>${grid}<line x1="${padLeft}" x2="${width - padRight}" y1="${zeroY}" y2="${zeroY}" stroke="#cbd5e1" stroke-opacity=".65" stroke-width="1.5"/>${chart}<text x="${padLeft}" y="${height - 8}" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points[0], analysisMode))}</text><text x="${width - padRight}" y="${height - 8}" text-anchor="end" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points.at(-1), analysisMode))}</text></svg>`;
         const axisSvg = `<svg width="52" height="${height}" viewBox="0 0 52 ${height}" aria-hidden="true"><line x1="51" x2="51" y1="${padTop}" y2="${height - padBottom}" stroke="#475569"/>${axis}</svg>`;
         chartContainer.innerHTML = `<div class="grid grid-cols-[52px_minmax(0,1fr)]" style="height:${height}px"><div class="sticky left-0 z-10 bg-slate-950/70">${axisSvg}</div><div id="calendar-chart-scroll" class="overflow-x-auto overflow-y-hidden overscroll-x-contain">${plotSvg}</div></div>`;
-        $('#calendar-chart-zoom-label').textContent = `${Math.round(calendarChartZoom * 100)}%`;
       }
       bindCalendarChartPinch(chartContainer);
       const scrollToLatest = () => {
@@ -1234,7 +1230,6 @@
           event.touches[0].clientY - event.touches[1].clientY
         );
         calendarChartZoom = Math.max(0.5, Math.min(20, Number((startZoom * distance / startDistance).toFixed(2))));
-        $('#calendar-chart-zoom-label').textContent = `${Math.round(calendarChartZoom * 100)}%`;
         const plot = $('#calendar-chart-scroll svg');
         if (plot) plot.style.transform = `scale(${calendarChartZoom / startZoom})`;
       }, { passive: false });
@@ -1727,22 +1722,6 @@
           renderCalendar();
         });
       });
-      $('#calendar-chart-zoom-out').addEventListener('click', () => {
-        triggerHaptic();
-        calendarChartZoom = Math.max(0.5, Number((calendarChartZoom - 0.25).toFixed(2)));
-        renderCalendar();
-      });
-      $('#calendar-chart-zoom-reset').addEventListener('click', () => {
-        triggerHaptic();
-        calendarChartZoom = 1;
-        renderCalendar();
-      });
-      $('#calendar-chart-zoom-in').addEventListener('click', () => {
-        triggerHaptic();
-        calendarChartZoom = Math.min(20, Number((calendarChartZoom + 0.25).toFixed(2)));
-        renderCalendar();
-      });
-
       // Calendar month pagination
       $('#cal-prev-btn').addEventListener('click', () => {
         triggerHaptic();
