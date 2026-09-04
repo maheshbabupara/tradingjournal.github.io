@@ -1165,14 +1165,6 @@
         const padRight = 12;
         const padTop = 28;
         const padBottom = 42;
-        const min = Math.min(0, ...points.map(point => point.total));
-        const max = Math.max(0, ...points.map(point => point.total));
-        const span = max - min || 1;
-        const x = index => padLeft + index * (width - padLeft - padRight) / Math.max(1, points.length - 1);
-        const y = value => padTop + (max - value) * (height - padTop - padBottom) / span;
-        const zeroY = y(0);
-        const grid = [min, (min + max) / 2, max].map(value => `<line x1="${padLeft}" x2="${width - padRight}" y1="${y(value)}" y2="${y(value)}" stroke="#334155" stroke-opacity=".45"/>`).join('');
-        const axis = [min, (min + max) / 2, max].map(value => `<text x="48" y="${y(value) + 4}" text-anchor="end" fill="#94a3b8" font-size="10">${formatChartAxis(value)}</text>`).join('');
         let running = 0;
         const candles = points.map(point => {
           const open = running;
@@ -1180,6 +1172,14 @@
           running = close;
           return { point, open, close, high: Math.max(open, close), low: Math.min(open, close) };
         });
+        const min = Math.min(0, ...candles.map(candle => candle.low));
+        const max = Math.max(0, ...candles.map(candle => candle.high));
+        const span = max - min || 1;
+        const x = index => padLeft + index * (width - padLeft - padRight) / Math.max(1, points.length - 1);
+        const y = value => padTop + (max - value) * (height - padTop - padBottom) / span;
+        const zeroY = y(0);
+        const grid = [min, (min + max) / 2, max].map(value => `<line x1="${padLeft}" x2="${width - padRight}" y1="${y(value)}" y2="${y(value)}" stroke="#334155" stroke-opacity=".45"/>`).join('');
+        const axis = [min, (min + max) / 2, max].map(value => `<text x="48" y="${y(value) + 4}" text-anchor="end" fill="#94a3b8" font-size="10">${formatChartAxis(value)}</text>`).join('');
         const chart = calendarChartType === 'line'
           ? `<path d="${candles.map((candle, index) => `${index ? 'L' : 'M'}${x(index)},${y(candle.close)}`).join(' ')}" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><g>${candles.map((candle, index) => `<circle class="calendar-chart-point" cx="${x(index)}" cy="${y(candle.close)}" r="8" fill="transparent" data-label="${escapeHtml(candle.point.label)}" data-total="${candle.point.total}" data-count="${candle.point.count}"/><circle cx="${x(index)}" cy="${y(candle.close)}" r="3" fill="#38bdf8"/>`).join('')}</g>`
           : candles.map((candle, index) => {
