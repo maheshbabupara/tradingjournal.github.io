@@ -318,6 +318,10 @@
             </div>
             <span id="analysis-period-total" class="font-mono-num font-bold text-base text-emerald-400">₹0</span>
           </div>
+          <div class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-white/10" role="group" aria-label="Chart type">
+            <button data-chart-type="line" class="chart-type-toggle flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-emerald-500 text-slate-950">Line</button>
+            <button data-chart-type="candle" class="chart-type-toggle flex-1 py-1.5 text-xs font-medium text-slate-400 rounded-lg transition-all hover:text-white">Candle</button>
+          </div>
           <div id="analysis-bars-chart" class="h-48 border-b border-white/10 overflow-x-auto overflow-y-hidden"></div>
           <div id="analysis-breakdown-list" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
         </div>
@@ -584,6 +588,7 @@
     let entries = [];
     let calendarCursor = new Date();
     let analysisMode = 'daily';
+    let calendarChartType = 'line';
     let projectionDays = 21;
     let currentDetailId = null;
     let defaultTradeRules = '';
@@ -1092,6 +1097,12 @@
         btn.classList.toggle('text-slate-950', isMatch);
         btn.classList.toggle('text-slate-400', !isMatch);
       });
+      $$('.chart-type-toggle').forEach(btn => {
+        const isMatch = btn.dataset.chartType === calendarChartType;
+        btn.classList.toggle('bg-emerald-500', isMatch);
+        btn.classList.toggle('text-slate-950', isMatch);
+        btn.classList.toggle('text-slate-400', !isMatch);
+      });
 
       const chartContainer = $('#analysis-bars-chart');
 
@@ -1113,15 +1124,27 @@
         const y = value => padTop + (max - value) * (height - padTop - padBottom) / span;
         const zeroY = y(0);
         const grid = [min, (min + max) / 2, max].map(value => `<line x1="${padLeft}" x2="${width - padRight}" y1="${y(value)}" y2="${y(value)}" stroke="#334155" stroke-opacity=".45"/><text x="${padLeft - 7}" y="${y(value) + 4}" text-anchor="end" fill="#94a3b8" font-size="10">${formatChartAxis(value)}</text>`).join('');
-        const bars = points.map((point, index) => {
-          const barWidth = Math.min(26, Math.max(10, (width - padLeft - padRight) / Math.max(1, points.length) * 0.55));
-          const barHeight = Math.abs(y(point.total) - zeroY);
-          const barY = point.total >= 0 ? y(point.total) : zeroY;
-          const color = point.total >= 0 ? '#34d399' : '#fb7185';
-          return `<rect x="${x(index) - barWidth / 2}" y="${barY}" width="${barWidth}" height="${Math.max(2, barHeight)}" rx="3" fill="${color}" fill-opacity=".9"><title>${escapeHtml(point.label)}: ${formatCurrency(point.total)} (${point.count} ${point.count === 1 ? 'trade' : 'trades'})</title></rect>`;
-        }).join('');
-        chartContainer.innerHTML = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${labels[analysisMode]} net profit and loss by period"><title>All ${labels[analysisMode].toLowerCase()} groups, net P&amp;L</title>${grid}<line x1="${padLeft}" x2="${width - padRight}" y1="${zeroY}" y2="${zeroY}" stroke="#cbd5e1" stroke-opacity=".65" stroke-width="1.5"/>${bars}<text x="${padLeft}" y="${height - 8}" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points[0], analysisMode))}</text><text x="${width - padRight}" y="${height - 8}" text-anchor="end" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points.at(-1), analysisMode))}</text></svg>`;
+        let running = 0;
+        const candles = points.map(point => {
+          const open = running;
+          const close = running + point.total;
+          running = close;
+          return { point, open, close, high: Math.max(open, close), low: Math.min(open, close) };
+        });
+        const chart = calendarChartType === 'line'
+          ? `<path d="${candles.map((candle, index) => `${index ? 'L' : 'M'}${x(index)},${y(candle.close)}`).join(' ')}" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`
+          : candles.map((candle, index) => {
+            const color = candle.close >= candle.open ? '#34d399' : '#fb7185';
+            const bodyTop = Math.min(y(candle.open), y(candle.close));
+            const bodyHeight = Math.max(2, Math.abs(y(candle.close) - y(candle.open)));
+            const candleWidth = Math.min(24, Math.max(8, (width - padLeft - padRight) / Math.max(1, points.length) * 0.5));
+            return `<g><line x1="${x(index)}" x2="${x(index)}" y1="${y(candle.high)}" y2="${y(candle.low)}" stroke="${color}" stroke-width="1.5"/><rect x="${x(index) - candleWidth / 2}" y="${bodyTop}" width="${candleWidth}" height="${bodyHeight}" rx="2" fill="${color}" fill-opacity=".9"><title>${escapeHtml(candle.point.label)}: ${formatCurrency(candle.point.total)} (${candle.point.count} ${candle.point.count === 1 ? 'trade' : 'trades'})</title></rect></g>`;
+          }).join('');
+        chartContainer.innerHTML = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${labels[analysisMode]} net profit and loss ${calendarChartType} chart"><title>${labels[analysisMode]} net profit and loss ${calendarChartType} chart</title>${grid}<line x1="${padLeft}" x2="${width - padRight}" y1="${zeroY}" y2="${zeroY}" stroke="#cbd5e1" stroke-opacity=".65" stroke-width="1.5"/>${chart}<text x="${padLeft}" y="${height - 8}" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points[0], analysisMode))}</text><text x="${width - padRight}" y="${height - 8}" text-anchor="end" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points.at(-1), analysisMode))}</text></svg>`;
       }
+      requestAnimationFrame(() => {
+        chartContainer.scrollLeft = chartContainer.scrollWidth;
+      });
 
       // Breakdown rows
       const breakdown = $('#analysis-breakdown-list');
@@ -1611,6 +1634,13 @@
         btn.addEventListener('click', () => {
           triggerHaptic();
           analysisMode = btn.dataset.analysis;
+          renderCalendar();
+        });
+      });
+      $$('.chart-type-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          triggerHaptic();
+          calendarChartType = btn.dataset.chartType;
           renderCalendar();
         });
       });
