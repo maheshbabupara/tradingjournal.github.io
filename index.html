@@ -443,11 +443,11 @@
               <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Planned trades
                 <input id="projection-planned-trades" type="number" min="1" step="1" value="20" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
               </label>
-              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Risk/trade (₹)
+              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Stop-loss/trade (₹)
                 <input id="projection-risk-budget" type="number" min="1" step="50" value="500" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
               </label>
-              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Stop distance/unit (₹)
-                <input id="projection-stop-distance" type="number" min="0.01" step="0.05" value="10" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
+              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Target/trade (₹)
+                <input id="projection-target-per-trade" type="number" min="0" step="50" value="1000" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
               </label>
             </div>
             <div class="grid grid-cols-2 gap-2 text-center">
@@ -455,8 +455,9 @@
               <div class="rounded-xl bg-sky-500/10 border border-sky-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Wins to cover 1 loss</span><b id="projection-wins-to-cover" class="text-xs font-mono text-sky-300">—</b></div>
               <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Wins in plan</span><b id="projection-wins-in-plan" class="text-xs font-mono text-white">—</b></div>
               <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Expected trades to target</span><b id="projection-trades-to-target" class="text-xs font-mono text-white">—</b></div>
-              <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Suggested units</span><b id="projection-lot-size" class="text-xs font-mono text-white">—</b></div>
-              <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">2R target/unit</span><b id="projection-target-distance" class="text-xs font-mono text-white">—</b></div>
+              <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Reward : risk</span><b id="projection-reward-ratio" class="text-xs font-mono text-white">—</b></div>
+              <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Stop-loss amount</span><b id="projection-stop-amount" class="text-xs font-mono text-white">—</b></div>
+              <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Target amount</span><b id="projection-target-amount" class="text-xs font-mono text-white">—</b></div>
             </div>
             <p id="projection-plan-note" class="rounded-xl bg-slate-900/60 border border-white/5 p-2 text-[11px] leading-5 text-slate-300">—</p>
           </div>
@@ -1531,25 +1532,29 @@
       });
       const target = Math.max(0, Number($('#projection-target')?.value) || 0);
       const plannedTrades = Math.max(1, Number($('#projection-planned-trades')?.value) || 1);
-      const riskBudget = Math.max(0, Number($('#projection-risk-budget')?.value) || 0);
-      const stopDistance = Math.max(0, Number($('#projection-stop-distance')?.value) || 0);
+      const stopLossAmount = Math.max(0, Number($('#projection-risk-budget')?.value) || 0);
+      const targetPerTrade = Math.max(0, Number($('#projection-target-per-trade')?.value) || 0);
       const scaledWin = averageWin * projectionRiskScale;
       const scaledLoss = averageLoss * projectionRiskScale;
       const lossMagnitude = Math.abs(scaledLoss);
-      const breakEvenRate = scaledWin > 0 ? lossMagnitude / (scaledWin + lossMagnitude) : 0;
-      const winsToCover = scaledWin > 0 && lossMagnitude > 0 ? Math.ceil(lossMagnitude / scaledWin) : 0;
+      const rewardMultiple = stopLossAmount > 0 ? targetPerTrade / stopLossAmount : 0;
+      const plannedWin = targetPerTrade;
+      const plannedLoss = stopLossAmount;
+      const breakEvenRate = targetPerTrade > 0 ? stopLossAmount / (targetPerTrade + stopLossAmount) : 0;
+      const winsToCover = targetPerTrade > 0 ? Math.ceil(stopLossAmount / targetPerTrade) : 0;
       const netPerTrade = expectancy * projectionRiskScale;
-      const winsInPlan = scaledWin > scaledLoss ? Math.ceil(Math.max(0, (target - plannedTrades * scaledLoss) / (scaledWin - scaledLoss))) : 0;
-      const expectedTradesToTarget = netPerTrade > 0 && target > 0 ? Math.ceil(target / netPerTrade) : null;
-      const suggestedUnits = riskBudget > 0 && stopDistance > 0 ? Math.floor(riskBudget / stopDistance) : 0;
-      $('#projection-breakeven-rate').textContent = scaledWin > 0 ? `${Math.round(breakEvenRate * 100)}%` : '—';
-      $('#projection-wins-to-cover').textContent = winsToCover ? `${winsToCover}` : '—';
-      $('#projection-wins-in-plan').textContent = scaledWin > 0 ? `${Math.min(plannedTrades, winsInPlan)} / ${plannedTrades}` : '—';
+      const plannedNetPerTrade = winRate * plannedWin - (1 - winRate) * plannedLoss;
+      const winsInPlan = plannedWin > 0 ? Math.ceil(Math.max(0, (target + plannedTrades * plannedLoss) / (plannedWin + plannedLoss))) : 0;
+      const expectedTradesToTarget = plannedNetPerTrade > 0 && target > 0 ? Math.ceil(target / plannedNetPerTrade) : null;
+      $('#projection-breakeven-rate').textContent = `${Math.round(breakEvenRate * 100)}%`;
+      $('#projection-wins-to-cover').textContent = `${winsToCover}`;
+      $('#projection-wins-in-plan').textContent = `${Math.min(plannedTrades, winsInPlan)} / ${plannedTrades}`;
       $('#projection-trades-to-target').textContent = expectedTradesToTarget ? `${expectedTradesToTarget}` : '—';
-      $('#projection-lot-size').textContent = suggestedUnits ? `${suggestedUnits}` : '—';
-      $('#projection-target-distance').textContent = stopDistance ? formatShortMoney(stopDistance * 2) : '—';
-      $('#projection-plan-note').textContent = scaledWin > 0 && lossMagnitude > 0
-        ? `At ${plannedTrades} trades, about ${Math.min(plannedTrades, winsInPlan)} wins and ${Math.max(0, plannedTrades - winsInPlan)} losses would reach ${formatShortMoney(target)} under your average outcome assumption. Risk budget ${formatShortMoney(riskBudget)} with a ${formatShortMoney(stopDistance)} stop allows ${suggestedUnits || '—'} units; a 2R target is ${formatShortMoney(stopDistance * 2)} per unit.`
+      $('#projection-reward-ratio').textContent = rewardMultiple ? `${rewardMultiple.toFixed(2)}R` : '—';
+      $('#projection-stop-amount').textContent = stopLossAmount ? formatShortMoney(stopLossAmount) : '—';
+      $('#projection-target-amount').textContent = targetPerTrade ? formatShortMoney(targetPerTrade) : '—';
+      $('#projection-plan-note').textContent = stopLossAmount > 0 && targetPerTrade > 0
+        ? `At ${plannedTrades} trades, about ${Math.min(plannedTrades, winsInPlan)} wins and ${Math.max(0, plannedTrades - winsInPlan)} losses would reach ${formatShortMoney(target)}. Each loss is ${formatShortMoney(plannedLoss)}, each win is ${formatShortMoney(plannedWin)}, giving a ${rewardMultiple.toFixed(2)}R reward:risk plan.`
         : 'Record both winning and losing trades to calculate a meaningful plan.';
 
       if (daily.length < 5) {
@@ -1961,7 +1966,7 @@
         projectionBand = Number(event.target.value) || 0.1;
         renderProjection();
       });
-      ['#projection-target', '#projection-planned-trades', '#projection-risk-budget', '#projection-stop-distance'].forEach(selector => {
+      ['#projection-target', '#projection-planned-trades', '#projection-risk-budget', '#projection-target-per-trade'].forEach(selector => {
         $(selector).addEventListener('input', renderProjection);
       });
 
