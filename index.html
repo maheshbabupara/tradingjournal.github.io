@@ -389,24 +389,76 @@
       <section id="screen-projections" class="screen-panel hidden space-y-3.5">
         <div class="glass-card rounded-3xl p-4 space-y-3">
           <div class="flex items-start justify-between gap-3">
-            <div><p class="text-[10px] font-bold uppercase tracking-widest text-sky-400">Forward view</p><h3 class="text-base font-extrabold text-white">Equity projection</h3></div>
-            <span class="text-[10px] leading-4 text-right text-slate-400">Illustrative only<br>not financial advice</span>
+            <div><p class="text-[10px] font-bold uppercase tracking-widest text-sky-400">Forward view</p><h3 class="text-base font-extrabold text-white">Trading outcome range</h3></div>
+            <span class="text-[10px] leading-4 text-right text-slate-400">Scenario tool<br>not a promise</span>
           </div>
           <p id="projection-context" class="text-xs leading-5 text-slate-400">Uses your recorded daily net P&amp;L.</p>
+          <p class="rounded-xl border border-sky-400/15 bg-sky-400/5 p-2 text-[11px] leading-5 text-slate-400">Model: 3-day block bootstrap. It replays short sequences from your history to preserve streaks. Use it for planning and sizing, not as a guaranteed prediction.</p>
           <div class="grid grid-cols-3 gap-2" role="group" aria-label="Projection horizon">
             <button class="projection-period tap-active rounded-xl border border-white/10 bg-sky-500 text-slate-950 py-2 text-xs font-extrabold" data-projection-days="21">1 Month</button>
             <button class="projection-period tap-active rounded-xl border border-white/10 text-slate-400 py-2 text-xs font-bold" data-projection-days="63">3 Months</button>
             <button class="projection-period tap-active rounded-xl border border-white/10 text-slate-400 py-2 text-xs font-bold" data-projection-days="126">6 Months</button>
           </div>
-          <button id="run-projection-btn" class="tap-active w-full rounded-2xl bg-sky-400 py-3 text-sm font-black text-slate-950">Refresh projection</button>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Risk scale <span id="projection-risk-label" class="font-mono text-sky-300">1.0x</span>
+              <input id="projection-risk" type="range" min="0.25" max="2" step="0.25" value="1" class="w-full accent-sky-400">
+            </label>
+            <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Range
+              <select id="projection-confidence" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2 py-2 border border-white/10">
+                <option value="0.1">10th–90th</option>
+                <option value="0.2">20th–80th</option>
+                <option value="0.05">5th–95th</option>
+              </select>
+            </label>
+          </div>
+          <button id="run-projection-btn" class="tap-active w-full rounded-2xl bg-sky-400 py-3 text-sm font-black text-slate-950">Refresh scenario</button>
         </div>
         <div class="glass-card rounded-3xl p-4 space-y-3">
-          <div class="flex justify-between items-center"><div><p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Monte Carlo range</p><h3 class="text-sm font-bold text-slate-200">Historical daily returns</h3></div><span id="projection-horizon-label" class="text-xs font-mono text-sky-300">21 days</span></div>
+          <div class="flex justify-between items-center"><div><p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Decision scenario</p><h3 class="text-sm font-bold text-slate-200">Historical daily net P&amp;L</h3></div><span id="projection-horizon-label" class="text-xs font-mono text-sky-300">21 trading days</span></div>
           <div class="relative h-[210px] rounded-2xl bg-black/30 border border-white/5 overflow-hidden"><svg id="projection-svg" class="w-full h-full p-1" viewBox="0 0 600 210" preserveAspectRatio="none"></svg></div>
           <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="rounded-xl bg-rose-500/10 border border-rose-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Downside</span><b id="projection-low" class="text-xs font-mono text-rose-300">—</b></div>
-            <div class="rounded-xl bg-sky-500/10 border border-sky-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Median</span><b id="projection-median" class="text-xs font-mono text-sky-300">—</b></div>
-            <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Upside</span><b id="projection-high" class="text-xs font-mono text-emerald-300">—</b></div>
+            <div class="rounded-xl bg-rose-500/10 border border-rose-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Lower P&amp;L</span><b id="projection-low" class="text-xs font-mono text-rose-300">—</b></div>
+            <div class="rounded-xl bg-sky-500/10 border border-sky-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Typical P&amp;L</span><b id="projection-median" class="text-xs font-mono text-sky-300">—</b></div>
+            <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Upper P&amp;L</span><b id="projection-high" class="text-xs font-mono text-emerald-300">—</b></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Chance of profit</span><b id="projection-profit-chance" class="text-xs font-mono text-white">—</b></div>
+            <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Median daily P&amp;L</span><b id="projection-daily-average" class="text-xs font-mono text-white">—</b></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Win rate</span><b id="projection-win-rate" class="text-xs font-mono text-white">—</b></div>
+            <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Expectancy</span><b id="projection-expectancy" class="text-xs font-mono text-white">—</b></div>
+            <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Max losing streak</span><b id="projection-losing-streak" class="text-xs font-mono text-white">—</b></div>
+          </div>
+          <p id="projection-risk-note" class="rounded-xl bg-rose-500/10 border border-rose-500/20 p-2 text-[11px] leading-5 text-rose-200">—</p>
+          <div class="border-t border-white/10 pt-3 space-y-3">
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Trading plan calculator</p>
+              <p class="text-[11px] leading-5 text-slate-400">Use your own target and risk budget. The calculator does not choose a trade for you.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Target P&amp;L (₹)
+                <input id="projection-target" type="number" min="0" step="100" value="5000" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
+              </label>
+              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Planned trades
+                <input id="projection-planned-trades" type="number" min="1" step="1" value="20" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
+              </label>
+              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Risk/trade (₹)
+                <input id="projection-risk-budget" type="number" min="1" step="50" value="500" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
+              </label>
+              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Stop distance/unit (₹)
+                <input id="projection-stop-distance" type="number" min="0.01" step="0.05" value="10" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-center">
+              <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Break-even win rate</span><b id="projection-breakeven-rate" class="text-xs font-mono text-emerald-300">—</b></div>
+              <div class="rounded-xl bg-sky-500/10 border border-sky-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Wins to cover 1 loss</span><b id="projection-wins-to-cover" class="text-xs font-mono text-sky-300">—</b></div>
+              <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Wins in plan</span><b id="projection-wins-in-plan" class="text-xs font-mono text-white">—</b></div>
+              <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Expected trades to target</span><b id="projection-trades-to-target" class="text-xs font-mono text-white">—</b></div>
+              <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Suggested units</span><b id="projection-lot-size" class="text-xs font-mono text-white">—</b></div>
+              <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">2R target/unit</span><b id="projection-target-distance" class="text-xs font-mono text-white">—</b></div>
+            </div>
+            <p id="projection-plan-note" class="rounded-xl bg-slate-900/60 border border-white/5 p-2 text-[11px] leading-5 text-slate-300">—</p>
           </div>
           <p id="projection-summary" class="text-[11px] leading-5 text-slate-400">Add trades to generate a projection.</p>
         </div>
@@ -637,6 +689,8 @@
     let calendarChartType = 'line';
     let calendarChartZoom = 1;
     let projectionDays = 21;
+    let projectionRiskScale = 1;
+    let projectionBand = 0.1;
     let currentDetailId = null;
     let defaultTradeRules = '';
 
@@ -1461,32 +1515,86 @@
       const { daily, equity } = getProjectionHistory();
       const horizon = projectionDays;
       $('#projection-horizon-label').textContent = `${horizon} trading days`;
-      $('#projection-context').textContent = `Bootstrapped from ${daily.length} active trading days of net P&L. Archived entries and observations are excluded.`;
+      $('#projection-context').textContent = `Bootstrapped from ${daily.length} active trading days of net P&L. Values show change from current cumulative P&L, not account balance.`;
+      const tradedEntries = entries.filter(entry => entry.archived !== 'Y' && TRADED.has(entry.trade_result));
+      const wins = tradedEntries.filter(entry => entry.trade_result === 'WIN');
+      const losses = tradedEntries.filter(entry => entry.trade_result === 'LOSS');
+      const winRate = tradedEntries.length ? wins.length / tradedEntries.length : 0;
+      const averageWin = wins.length ? wins.reduce((sum, entry) => sum + getNetValue(entry), 0) / wins.length : 0;
+      const averageLoss = losses.length ? losses.reduce((sum, entry) => sum + getNetValue(entry), 0) / losses.length : 0;
+      const expectancy = tradedEntries.length ? tradedEntries.reduce((sum, entry) => sum + getNetValue(entry), 0) / tradedEntries.length : 0;
+      let losingStreak = 0;
+      let maxLosingStreak = 0;
+      daily.forEach(item => {
+        losingStreak = item.net < 0 ? losingStreak + 1 : 0;
+        maxLosingStreak = Math.max(maxLosingStreak, losingStreak);
+      });
+      const target = Math.max(0, Number($('#projection-target')?.value) || 0);
+      const plannedTrades = Math.max(1, Number($('#projection-planned-trades')?.value) || 1);
+      const riskBudget = Math.max(0, Number($('#projection-risk-budget')?.value) || 0);
+      const stopDistance = Math.max(0, Number($('#projection-stop-distance')?.value) || 0);
+      const scaledWin = averageWin * projectionRiskScale;
+      const scaledLoss = averageLoss * projectionRiskScale;
+      const lossMagnitude = Math.abs(scaledLoss);
+      const breakEvenRate = scaledWin > 0 ? lossMagnitude / (scaledWin + lossMagnitude) : 0;
+      const winsToCover = scaledWin > 0 && lossMagnitude > 0 ? Math.ceil(lossMagnitude / scaledWin) : 0;
+      const netPerTrade = expectancy * projectionRiskScale;
+      const winsInPlan = scaledWin > scaledLoss ? Math.ceil(Math.max(0, (target - plannedTrades * scaledLoss) / (scaledWin - scaledLoss))) : 0;
+      const expectedTradesToTarget = netPerTrade > 0 && target > 0 ? Math.ceil(target / netPerTrade) : null;
+      const suggestedUnits = riskBudget > 0 && stopDistance > 0 ? Math.floor(riskBudget / stopDistance) : 0;
+      $('#projection-breakeven-rate').textContent = scaledWin > 0 ? `${Math.round(breakEvenRate * 100)}%` : '—';
+      $('#projection-wins-to-cover').textContent = winsToCover ? `${winsToCover}` : '—';
+      $('#projection-wins-in-plan').textContent = scaledWin > 0 ? `${Math.min(plannedTrades, winsInPlan)} / ${plannedTrades}` : '—';
+      $('#projection-trades-to-target').textContent = expectedTradesToTarget ? `${expectedTradesToTarget}` : '—';
+      $('#projection-lot-size').textContent = suggestedUnits ? `${suggestedUnits}` : '—';
+      $('#projection-target-distance').textContent = stopDistance ? formatShortMoney(stopDistance * 2) : '—';
+      $('#projection-plan-note').textContent = scaledWin > 0 && lossMagnitude > 0
+        ? `At ${plannedTrades} trades, about ${Math.min(plannedTrades, winsInPlan)} wins and ${Math.max(0, plannedTrades - winsInPlan)} losses would reach ${formatShortMoney(target)} under your average outcome assumption. Risk budget ${formatShortMoney(riskBudget)} with a ${formatShortMoney(stopDistance)} stop allows ${suggestedUnits || '—'} units; a 2R target is ${formatShortMoney(stopDistance * 2)} per unit.`
+        : 'Record both winning and losing trades to calculate a meaningful plan.';
 
       if (daily.length < 5) {
         svg.innerHTML = '<text x="300" y="105" text-anchor="middle" fill="#94a3b8" font-size="13">Record at least 5 trading days to project</text>';
         $('#projection-low').textContent = '—';
         $('#projection-median').textContent = '—';
         $('#projection-high').textContent = '—';
+        $('#projection-profit-chance').textContent = '—';
+        $('#projection-daily-average').textContent = '—';
+        $('#projection-win-rate').textContent = '—';
+        $('#projection-expectancy').textContent = '—';
+        $('#projection-losing-streak').textContent = '—';
+        $('#projection-risk-note').textContent = `Record at least 5 trading days before using a scenario. Current sample: ${daily.length} day${daily.length === 1 ? '' : 's'}.`;
         $('#projection-summary').textContent = `Only ${daily.length} trading day${daily.length === 1 ? '' : 's'} available. The range stays hidden until the sample is usable.`;
         return;
       }
 
       const runs = 4000;
-      const seed = daily.reduce((total, item, index) => total + Math.round(item.net * 100) * (index + 1), horizon * 7919 + daily.length);
+      const scenarioDaily = daily.map(item => ({ ...item, net: item.net * projectionRiskScale }));
+      const seed = scenarioDaily.reduce((total, item, index) => total + Math.round(item.net * 100) * (index + 1), horizon * 7919 + daily.length + Math.round(projectionRiskScale * 100));
       const random = projectionRandom(seed);
       const paths = Array.from({ length: horizon }, () => []);
+      const drawdowns = [];
+      const blockLength = Math.min(3, scenarioDaily.length);
       for (let run = 0; run < runs; run += 1) {
         let value = equity[equity.length - 1];
+        let peak = value;
+        let maxDrawdown = 0;
+        let blockStart = 0;
         for (let day = 0; day < horizon; day += 1) {
-          value += daily[Math.floor(random() * daily.length)].net;
+          if (day % blockLength === 0) blockStart = Math.floor(random() * scenarioDaily.length);
+          value += scenarioDaily[(blockStart + (day % blockLength)) % scenarioDaily.length].net;
+          peak = Math.max(peak, value);
+          maxDrawdown = Math.max(maxDrawdown, peak - value);
           paths[day].push(value);
         }
+        drawdowns.push(maxDrawdown);
       }
 
-      const lower = paths.map(path => projectionPercentile(path, 0.10));
+      const lower = paths.map(path => projectionPercentile(path, projectionBand));
       const median = paths.map(path => projectionPercentile(path, 0.50));
-      const upper = paths.map(path => projectionPercentile(path, 0.90));
+      const upper = paths.map(path => projectionPercentile(path, 1 - projectionBand));
+      const terminal = paths.at(-1);
+      const profitChance = terminal.filter(value => value > equity.at(-1)).length / terminal.length;
+      const projectedDrawdown = projectionPercentile(drawdowns, 0.9);
       const historyLabels = daily.map(item => item.day);
       const futureLabels = Array.from({ length: horizon }, (_, index) => {
         const date = new Date(`${historyLabels.at(-1)}T12:00:00`);
@@ -1512,7 +1620,13 @@
       $('#projection-low').textContent = formatShortMoney(lower.at(-1));
       $('#projection-median').textContent = formatShortMoney(median.at(-1));
       $('#projection-high').textContent = formatShortMoney(upper.at(-1));
-      $('#projection-summary').textContent = `${runs.toLocaleString('en-IN')} deterministic bootstrap paths • 10th–90th percentile terminal range • ${daily.length} trading days sampled`;
+      $('#projection-profit-chance').textContent = `${Math.round(profitChance * 100)}%`;
+      $('#projection-daily-average').textContent = formatShortMoney((median.at(-1) - equity.at(-1)) / horizon);
+      $('#projection-win-rate').textContent = `${Math.round(winRate * 100)}%`;
+      $('#projection-expectancy').textContent = formatShortMoney(expectancy * projectionRiskScale);
+      $('#projection-losing-streak').textContent = `${maxLosingStreak} day${maxLosingStreak === 1 ? '' : 's'}`;
+      $('#projection-risk-note').textContent = `Plan for a possible ${formatShortMoney(projectedDrawdown)} peak-to-trough drawdown over this horizon. Historical average win ${formatShortMoney(averageWin * projectionRiskScale)} • average loss ${formatShortMoney(averageLoss * projectionRiskScale)}.`;
+      $('#projection-summary').textContent = `${runs.toLocaleString('en-IN')} 3-day block-bootstrap paths • ${Math.round(projectionBand * 100)}th–${Math.round((1 - projectionBand) * 100)}th percentile range • ${daily.length} trading days sampled • ${projectionRiskScale.toFixed(2)}x historical P&L scale`;
     }
 
     async function openTradeDetail(id) {
@@ -1837,6 +1951,18 @@
       $('#run-projection-btn').addEventListener('click', () => {
         triggerHaptic();
         renderProjection();
+      });
+      $('#projection-risk').addEventListener('input', event => {
+        projectionRiskScale = Number(event.target.value) || 1;
+        $('#projection-risk-label').textContent = `${projectionRiskScale.toFixed(2)}x`;
+        renderProjection();
+      });
+      $('#projection-confidence').addEventListener('change', event => {
+        projectionBand = Number(event.target.value) || 0.1;
+        renderProjection();
+      });
+      ['#projection-target', '#projection-planned-trades', '#projection-risk-budget', '#projection-stop-distance'].forEach(selector => {
+        $(selector).addEventListener('input', renderProjection);
       });
 
       // Refresh button
