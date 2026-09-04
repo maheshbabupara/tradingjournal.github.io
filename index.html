@@ -236,6 +236,11 @@
             <!-- Rendered by JS -->
           </div>
         </div>
+
+        <button class="nav-trigger tap-active w-full glass-card rounded-3xl p-4 flex items-center justify-between text-left" data-target="screen-projections">
+          <span><span class="block text-[10px] font-bold uppercase tracking-widest text-sky-400">Forward view</span><span class="block mt-1 text-sm font-bold text-slate-100">Project your equity curve</span></span>
+          <span class="text-sky-400 text-xl" aria-hidden="true">&#8594;</span>
+        </button>
       </section>
 
       <section id="screen-trades" class="screen-panel hidden space-y-3">
@@ -313,8 +318,8 @@
             </div>
             <span id="analysis-period-total" class="font-mono-num font-bold text-base text-emerald-400">₹0</span>
           </div>
-          <div id="analysis-bars-chart" class="h-36 grid grid-cols-6 gap-2 pt-2 pb-1 border-b border-white/10 overflow-hidden"></div>
-          <div id="analysis-breakdown-list" class="space-y-1.5 max-h-52 overflow-y-auto"></div>
+          <div id="analysis-bars-chart" class="h-48 border-b border-white/10 overflow-x-auto overflow-y-hidden"></div>
+          <div id="analysis-breakdown-list" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
         </div>
       </section>
 
@@ -328,6 +333,32 @@
         </div>
         <div id="journal-cards-list" class="space-y-3">
           <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <section id="screen-projections" class="screen-panel hidden space-y-3.5">
+        <div class="glass-card rounded-3xl p-4 space-y-3">
+          <div class="flex items-start justify-between gap-3">
+            <div><p class="text-[10px] font-bold uppercase tracking-widest text-sky-400">Forward view</p><h3 class="text-base font-extrabold text-white">Equity projection</h3></div>
+            <span class="text-[10px] leading-4 text-right text-slate-400">Illustrative only<br>not financial advice</span>
+          </div>
+          <p id="projection-context" class="text-xs leading-5 text-slate-400">Uses your recorded daily net P&amp;L.</p>
+          <div class="grid grid-cols-3 gap-2" role="group" aria-label="Projection horizon">
+            <button class="projection-period tap-active rounded-xl border border-white/10 bg-sky-500 text-slate-950 py-2 text-xs font-extrabold" data-projection-days="21">1 Month</button>
+            <button class="projection-period tap-active rounded-xl border border-white/10 text-slate-400 py-2 text-xs font-bold" data-projection-days="63">3 Months</button>
+            <button class="projection-period tap-active rounded-xl border border-white/10 text-slate-400 py-2 text-xs font-bold" data-projection-days="126">6 Months</button>
+          </div>
+          <button id="run-projection-btn" class="tap-active w-full rounded-2xl bg-sky-400 py-3 text-sm font-black text-slate-950">Refresh projection</button>
+        </div>
+        <div class="glass-card rounded-3xl p-4 space-y-3">
+          <div class="flex justify-between items-center"><div><p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Monte Carlo range</p><h3 class="text-sm font-bold text-slate-200">Historical daily returns</h3></div><span id="projection-horizon-label" class="text-xs font-mono text-sky-300">21 days</span></div>
+          <div class="relative h-[210px] rounded-2xl bg-black/30 border border-white/5 overflow-hidden"><svg id="projection-svg" class="w-full h-full p-1" viewBox="0 0 600 210" preserveAspectRatio="none"></svg></div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="rounded-xl bg-rose-500/10 border border-rose-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Downside</span><b id="projection-low" class="text-xs font-mono text-rose-300">—</b></div>
+            <div class="rounded-xl bg-sky-500/10 border border-sky-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Median</span><b id="projection-median" class="text-xs font-mono text-sky-300">—</b></div>
+            <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Upside</span><b id="projection-high" class="text-xs font-mono text-emerald-300">—</b></div>
+          </div>
+          <p id="projection-summary" class="text-[11px] leading-5 text-slate-400">Add trades to generate a projection.</p>
         </div>
       </section>
 
@@ -458,12 +489,12 @@
           <span class="text-[10px] font-semibold">Calendar</span>
         </button>
 
-        <!-- Journal Tab -->
-        <button data-tab="screen-journal" class="tab-btn tap-active flex flex-col items-center gap-1 text-slate-400 py-1 px-3">
+        <!-- Projections Tab -->
+        <button data-tab="screen-projections" class="tab-btn tap-active flex flex-col items-center gap-1 text-slate-400 py-1 px-3">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
           </svg>
-          <span class="text-[10px] font-semibold">Journal</span>
+          <span class="text-[10px] font-semibold">Projection</span>
         </button>
       </div>
     </nav>
@@ -553,6 +584,7 @@
     let entries = [];
     let calendarCursor = new Date();
     let analysisMode = 'daily';
+    let projectionDays = 21;
     let currentDetailId = null;
     let defaultTradeRules = '';
 
@@ -783,6 +815,7 @@
         'screen-trades': 'Trade Log',
         'screen-calendar': 'Calendar & P&L',
         'screen-journal': 'Trader Mindset',
+        'screen-projections': 'Equity Projection',
         'screen-entry': $('#form-entry-id').value ? 'Edit Entry' : 'Log Trade',
         'screen-rules': 'Playbook Rules'
       };
@@ -1060,32 +1093,34 @@
         btn.classList.toggle('text-slate-400', !isMatch);
       });
 
-      // Render Bar chart
-      const chartItems = groups.slice(0, 6).reverse();
-      const maxAbs = Math.max(1, ...chartItems.map(g => Math.abs(g.total)));
       const chartContainer = $('#analysis-bars-chart');
 
-      if (!chartItems.length) {
+      if (!groups.length) {
         chartContainer.innerHTML = '<p class="w-full text-center text-xs text-slate-500 py-6">No trades found in selected group.</p>';
       } else {
-        chartContainer.innerHTML = chartItems.map(g => {
-          const heightPct = Math.max(8, Math.round((Math.abs(g.total) / maxAbs) * 100));
-          const isPositive = g.total >= 0;
-          return `
-            <div class="min-w-0 flex flex-col items-center justify-end h-full gap-1.5 group">
-              <span class="text-[9px] font-mono text-slate-400 h-3 leading-3">
-                ${formatShortMoney(g.total)}
-              </span>
-              <div class="w-full max-w-[34px] h-full flex items-end justify-center">
-                <div class="w-full rounded-t-lg transition-all ${isPositive ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-rose-500 shadow-sm shadow-rose-500/50'}"
-                     style="height: ${heightPct}%"></div>
-              </div>
-              <span class="text-[9px] leading-3 text-slate-400 truncate w-full text-center font-mono">
-                ${escapeHtml(formatAnalysisLabel(g, analysisMode))}
-              </span>
-            </div>
-          `;
+        const chronological = groups.slice().reverse();
+        const points = chronological;
+        const width = Math.max(600, points.length * 42);
+        const height = 190;
+        const padLeft = 46;
+        const padRight = 12;
+        const padTop = 16;
+        const padBottom = 30;
+        const min = Math.min(0, ...points.map(point => point.total));
+        const max = Math.max(0, ...points.map(point => point.total));
+        const span = max - min || 1;
+        const x = index => padLeft + index * (width - padLeft - padRight) / Math.max(1, points.length - 1);
+        const y = value => padTop + (max - value) * (height - padTop - padBottom) / span;
+        const zeroY = y(0);
+        const grid = [min, (min + max) / 2, max].map(value => `<line x1="${padLeft}" x2="${width - padRight}" y1="${y(value)}" y2="${y(value)}" stroke="#334155" stroke-opacity=".45"/><text x="${padLeft - 7}" y="${y(value) + 4}" text-anchor="end" fill="#94a3b8" font-size="10">${formatChartAxis(value)}</text>`).join('');
+        const bars = points.map((point, index) => {
+          const barWidth = Math.min(26, Math.max(10, (width - padLeft - padRight) / Math.max(1, points.length) * 0.55));
+          const barHeight = Math.abs(y(point.total) - zeroY);
+          const barY = point.total >= 0 ? y(point.total) : zeroY;
+          const color = point.total >= 0 ? '#34d399' : '#fb7185';
+          return `<rect x="${x(index) - barWidth / 2}" y="${barY}" width="${barWidth}" height="${Math.max(2, barHeight)}" rx="3" fill="${color}" fill-opacity=".9"><title>${escapeHtml(point.label)}: ${formatCurrency(point.total)} (${point.count} ${point.count === 1 ? 'trade' : 'trades'})</title></rect>`;
         }).join('');
+        chartContainer.innerHTML = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${labels[analysisMode]} net profit and loss by period"><title>All ${labels[analysisMode].toLowerCase()} groups, net P&amp;L</title>${grid}<line x1="${padLeft}" x2="${width - padRight}" y1="${zeroY}" y2="${zeroY}" stroke="#cbd5e1" stroke-opacity=".65" stroke-width="1.5"/>${bars}<text x="${padLeft}" y="${height - 8}" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points[0], analysisMode))}</text><text x="${width - padRight}" y="${height - 8}" text-anchor="end" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points.at(-1), analysisMode))}</text></svg>`;
       }
 
       // Breakdown rows
@@ -1093,7 +1128,7 @@
       if (!groups.length) {
         breakdown.innerHTML = '';
       } else {
-        breakdown.innerHTML = groups.slice(0, 10).map(g => `
+        breakdown.innerHTML = groups.map(g => `
           <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-white/5 text-xs">
             <div>
               <p class="font-bold text-slate-200">${escapeHtml(g.label)}</p>
@@ -1239,6 +1274,105 @@
       renderTradesList();
       renderCalendar();
       renderJournalList();
+      renderProjection();
+    }
+
+    function projectionPercentile(values, percentile) {
+      const sorted = [...values].sort((a, b) => a - b);
+      const position = (sorted.length - 1) * percentile;
+      const lower = Math.floor(position);
+      const upper = Math.ceil(position);
+      if (lower === upper) return sorted[lower];
+      return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+    }
+
+    function projectionRandom(seed) {
+      let state = seed >>> 0;
+      return () => {
+        state = (1664525 * state + 1013904223) >>> 0;
+        return state / 4294967296;
+      };
+    }
+
+    function getProjectionHistory() {
+      const byDay = new Map();
+      entries.filter(entry => entry.archived !== 'Y' && TRADED.has(entry.trade_result)).forEach(entry => {
+        const day = String(entry.trade_on).slice(0, 10);
+        byDay.set(day, (byDay.get(day) || 0) + getNetValue(entry));
+      });
+
+      const daily = [...byDay.entries()]
+        .sort(([first], [second]) => first.localeCompare(second))
+        .map(([day, net]) => ({ day, net }));
+      let running = 0;
+      return {
+        daily,
+        equity: daily.map(item => {
+          running += item.net;
+          return running;
+        })
+      };
+    }
+
+    function renderProjection() {
+      const svg = $('#projection-svg');
+      if (!svg) return;
+
+      const { daily, equity } = getProjectionHistory();
+      const horizon = projectionDays;
+      $('#projection-horizon-label').textContent = `${horizon} trading days`;
+      $('#projection-context').textContent = `Bootstrapped from ${daily.length} active trading days of net P&L. Archived entries and observations are excluded.`;
+
+      if (daily.length < 5) {
+        svg.innerHTML = '<text x="300" y="105" text-anchor="middle" fill="#94a3b8" font-size="13">Record at least 5 trading days to project</text>';
+        $('#projection-low').textContent = '—';
+        $('#projection-median').textContent = '—';
+        $('#projection-high').textContent = '—';
+        $('#projection-summary').textContent = `Only ${daily.length} trading day${daily.length === 1 ? '' : 's'} available. The range stays hidden until the sample is usable.`;
+        return;
+      }
+
+      const runs = 4000;
+      const seed = daily.reduce((total, item, index) => total + Math.round(item.net * 100) * (index + 1), horizon * 7919 + daily.length);
+      const random = projectionRandom(seed);
+      const paths = Array.from({ length: horizon }, () => []);
+      for (let run = 0; run < runs; run += 1) {
+        let value = equity[equity.length - 1];
+        for (let day = 0; day < horizon; day += 1) {
+          value += daily[Math.floor(random() * daily.length)].net;
+          paths[day].push(value);
+        }
+      }
+
+      const lower = paths.map(path => projectionPercentile(path, 0.10));
+      const median = paths.map(path => projectionPercentile(path, 0.50));
+      const upper = paths.map(path => projectionPercentile(path, 0.90));
+      const historyLabels = daily.map(item => item.day);
+      const futureLabels = Array.from({ length: horizon }, (_, index) => {
+        const date = new Date(`${historyLabels.at(-1)}T12:00:00`);
+        let remaining = index + 1;
+        while (remaining > 0) {
+          date.setDate(date.getDate() + 1);
+          if (date.getDay() !== 0 && date.getDay() !== 6) remaining -= 1;
+        }
+        return date.toISOString().slice(0, 10);
+      });
+      const allValues = [...equity, ...lower, ...upper];
+      const min = Math.min(0, ...allValues);
+      const max = Math.max(0, ...allValues);
+      const span = max - min || 1;
+      const width = 600, height = 210, padLeft = 50, padRight = 10, padTop = 14, padBottom = 26;
+      const x = index => padLeft + index * (width - padLeft - padRight) / Math.max(1, historyLabels.length + horizon - 1);
+      const y = value => padTop + (max - value) * (height - padTop - padBottom) / span;
+      const historicalPath = equity.map((value, index) => `${index ? 'L' : 'M'}${x(index)},${y(value)}`).join(' ');
+      const medianPath = median.map((value, index) => `${index ? 'L' : 'M'}${x(historyLabels.length + index)},${y(value)}`).join(' ');
+      const bandPath = `${upper.map((value, index) => `${index ? 'L' : 'M'}${x(historyLabels.length + index)},${y(value)}`).join(' ')} ${lower.slice().reverse().map((value, index) => `L${x(historyLabels.length + lower.length - 1 - index)},${y(value)}`).join(' ')} Z`;
+      const grid = [min, (min + max) / 2, max].map(value => `<line x1="${padLeft}" x2="${width - padRight}" y1="${y(value)}" y2="${y(value)}" stroke="#334155" stroke-opacity=".45"/><text x="${padLeft - 7}" y="${y(value) + 4}" text-anchor="end" fill="#94a3b8" font-size="10">${formatChartAxis(value)}</text>`).join('');
+      svg.innerHTML = `${grid}<path d="${bandPath}" fill="#38bdf8" fill-opacity=".12"/><path d="${historicalPath}" fill="none" stroke="#10b981" stroke-width="2.5"/><path d="${medianPath}" fill="none" stroke="#38bdf8" stroke-width="2.5"/><text x="${padLeft}" y="${height - 7}" fill="#94a3b8" font-size="9">${historyLabels[0]}</text><text x="${width - padRight}" y="${height - 7}" text-anchor="end" fill="#94a3b8" font-size="9">${futureLabels.at(-1)}</text>`;
+      $('#projection-low').textContent = formatShortMoney(lower.at(-1));
+      $('#projection-median').textContent = formatShortMoney(median.at(-1));
+      $('#projection-high').textContent = formatShortMoney(upper.at(-1));
+      $('#projection-summary').textContent = `${runs.toLocaleString('en-IN')} deterministic bootstrap paths • 10th–90th percentile terminal range • ${daily.length} trading days sampled`;
     }
 
     async function openTradeDetail(id) {
@@ -1538,6 +1672,26 @@
       $('#rules-btn').addEventListener('click', () => navigateToScreen('screen-rules'));
       $('#save-rules-btn').addEventListener('click', saveDefaultRules);
       $('#export-csv-btn').addEventListener('click', downloadTradesCsv);
+
+      $$('.projection-period').forEach(button => {
+        button.addEventListener('click', () => {
+          triggerHaptic();
+          projectionDays = Number(button.dataset.projectionDays) || 21;
+          $$('.projection-period').forEach(item => {
+            const selected = item === button;
+            item.classList.toggle('bg-sky-500', selected);
+            item.classList.toggle('text-slate-950', selected);
+            item.classList.toggle('font-extrabold', selected);
+            item.classList.toggle('text-slate-400', !selected);
+            item.classList.toggle('font-bold', !selected);
+          });
+          renderProjection();
+        });
+      });
+      $('#run-projection-btn').addEventListener('click', () => {
+        triggerHaptic();
+        renderProjection();
+      });
 
       // Refresh button
       $('#refresh-btn').addEventListener('click', () => {

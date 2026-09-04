@@ -12,6 +12,12 @@ The app reads all pages from `getTrades`, opens individual records with `getTrad
 
 It sends JSON fields: `trade_on`, `trade_result`, `pl`, `charges`, `notes`, `trade_rules`, and `archived`.
 
+## Equity projections
+
+The projection screen bootstraps 4,000 deterministic simulation paths from the journal's active trading days. Multiple trades on the same date are aggregated using the same net P&L calculation as the dashboard; archived entries, observations, and missed opportunities are excluded. The displayed downside, median, and upside values are the 10th, 50th, and 90th percentiles of the terminal simulated equity.
+
+At least five active trading days are required before a range is shown. The result is a probabilistic scenario based on the recorded sample, not a guarantee or a forecast of market prices. A larger and more representative journal history produces a more informative range.
+
 The form submits positive `pl` and `charges` amounts. The visualized net result is calculated as:
 
 - WIN: `pl - charges`
