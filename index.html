@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
   <meta name="theme-color" content="#060913">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -39,6 +39,31 @@
     
     input, textarea, select {
       user-select: auto;
+    }
+
+    #field-trade-date {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      font-size: 16px;
+    }
+
+    #analysis-bars-chart {
+      min-width: 0;
+      overflow: hidden;
+      touch-action: pan-x pan-y;
+    }
+
+    #calendar-chart-scroll {
+      min-width: 0;
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #calendar-chart-scroll svg {
+      display: block;
+      transform-origin: left top;
     }
 
     body {
@@ -1120,7 +1145,8 @@
       } else {
         const chronological = groups.slice().reverse();
         const points = chronological;
-        const width = Math.max(600, points.length * 42 * calendarChartZoom);
+        const availableWidth = Math.max(240, chartContainer.clientWidth - 52);
+        const width = Math.max(availableWidth, points.length * 42) * calendarChartZoom;
         const height = Math.max(250, Math.min(380, 220 + Math.round(points.length * 2)));
         const padLeft = 8;
         const padRight = 12;
@@ -1155,6 +1181,7 @@
         chartContainer.innerHTML = `<div class="grid grid-cols-[52px_minmax(0,1fr)]" style="height:${height}px"><div class="sticky left-0 z-10 bg-slate-950/70">${axisSvg}</div><div id="calendar-chart-scroll" class="overflow-x-auto overflow-y-hidden overscroll-x-contain">${plotSvg}</div></div>`;
         $('#calendar-chart-zoom-label').textContent = `${Math.round(calendarChartZoom * 100)}%`;
       }
+      bindCalendarChartPinch(chartContainer);
       const scrollToLatest = () => {
         const scroll = $('#calendar-chart-scroll');
         if (scroll) scroll.scrollLeft = scroll.scrollWidth - scroll.clientWidth;
@@ -1180,6 +1207,45 @@
           </div>
         `).join('');
       }
+    }
+
+    function bindCalendarChartPinch(chartContainer) {
+      if (chartContainer.dataset.pinchBound === 'true') return;
+      chartContainer.dataset.pinchBound = 'true';
+      let startDistance = 0;
+      let startZoom = calendarChartZoom;
+      let pinching = false;
+
+      chartContainer.addEventListener('touchstart', event => {
+        if (event.touches.length !== 2) return;
+        pinching = true;
+        startDistance = Math.hypot(
+          event.touches[0].clientX - event.touches[1].clientX,
+          event.touches[0].clientY - event.touches[1].clientY
+        );
+        startZoom = calendarChartZoom;
+      }, { passive: true });
+
+      chartContainer.addEventListener('touchmove', event => {
+        if (!pinching || event.touches.length !== 2) return;
+        event.preventDefault();
+        const distance = Math.hypot(
+          event.touches[0].clientX - event.touches[1].clientX,
+          event.touches[0].clientY - event.touches[1].clientY
+        );
+        calendarChartZoom = Math.max(0.5, Math.min(20, Number((startZoom * distance / startDistance).toFixed(2))));
+        $('#calendar-chart-zoom-label').textContent = `${Math.round(calendarChartZoom * 100)}%`;
+        const plot = $('#calendar-chart-scroll svg');
+        if (plot) plot.style.transform = `scale(${calendarChartZoom / startZoom})`;
+      }, { passive: false });
+
+      const finishPinch = () => {
+        if (!pinching) return;
+        pinching = false;
+        renderCalendar();
+      };
+      chartContainer.addEventListener('touchend', finishPinch, { passive: true });
+      chartContainer.addEventListener('touchcancel', finishPinch, { passive: true });
     }
 
     function calculatePeriodGroups(mode, list) {
@@ -1663,7 +1729,7 @@
       });
       $('#calendar-chart-zoom-out').addEventListener('click', () => {
         triggerHaptic();
-        calendarChartZoom = Math.max(0.75, Number((calendarChartZoom - 0.25).toFixed(2)));
+        calendarChartZoom = Math.max(0.5, Number((calendarChartZoom - 0.25).toFixed(2)));
         renderCalendar();
       });
       $('#calendar-chart-zoom-reset').addEventListener('click', () => {
@@ -1673,7 +1739,7 @@
       });
       $('#calendar-chart-zoom-in').addEventListener('click', () => {
         triggerHaptic();
-        calendarChartZoom = Math.min(3, Number((calendarChartZoom + 0.25).toFixed(2)));
+        calendarChartZoom = Math.min(20, Number((calendarChartZoom + 0.25).toFixed(2)));
         renderCalendar();
       });
 
