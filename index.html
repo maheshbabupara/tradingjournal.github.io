@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <meta name="theme-color" content="#060913">
+  <meta id="theme-color-meta" name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Trade Ledger">
@@ -15,6 +15,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <script>
+    (() => {
+      const savedTheme = localStorage.getItem('trade-ledger-theme');
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        document.documentElement.dataset.theme = savedTheme;
+      }
+    })();
+  </script>
   
   <style>
     :root {
@@ -187,6 +196,228 @@
     #detail-sheet.hidden { display: none; }
     #detail-sheet > .py-4 { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
     #detail-sheet > .py-4 > .grid:last-child { position: sticky; bottom: 0; padding-top: 14px; background: linear-gradient(to bottom, transparent, #121927 18%); }
+
+    /* Follow the device appearance setting without adding a manual theme switch. */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --card-bg: rgba(18, 18, 18, 0.97);
+        --card-border: rgba(255, 255, 255, 0.13);
+        --card-highlight: rgba(255, 255, 255, 0.045);
+      }
+
+      body,
+      #app-viewport {
+        background-color: #000000 !important;
+      }
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f6f8fb;
+        --card-bg: rgba(255, 255, 255, 0.9);
+        --card-border: rgba(15, 23, 42, 0.1);
+        --card-highlight: rgba(15, 23, 42, 0.04);
+      }
+
+      body,
+      #app-viewport {
+        background-color: #f6f8fb !important;
+        color: #172033 !important;
+      }
+
+      .glass-header {
+        background: rgba(246, 248, 251, 0.9);
+        border-bottom-color: rgba(15, 23, 42, 0.1);
+      }
+
+      .glass-nav {
+        background: rgba(255, 255, 255, 0.9);
+        border-top-color: rgba(15, 23, 42, 0.1);
+      }
+
+      .glass-card {
+        box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+      }
+
+      .text-white,
+      .text-slate-100,
+      .text-slate-200 {
+        color: #172033 !important;
+      }
+
+      .text-slate-300 { color: #40506a !important; }
+      .text-slate-400 { color: #64748b !important; }
+      .text-slate-500 { color: #7b879b !important; }
+
+      .bg-slate-900\/90,
+      .bg-slate-900\/80,
+      .bg-slate-900\/60,
+      .bg-slate-800\/90,
+      .bg-slate-800\/80,
+      .bg-slate-800\/70,
+      .bg-slate-800 {
+        background-color: #e9eef5 !important;
+      }
+
+      .bg-black\/40,
+      .bg-black\/30 {
+        background-color: rgba(226, 232, 240, 0.7) !important;
+      }
+
+      .border-white\/5,
+      .border-white\/10,
+      .border-white\/15,
+      .border-white\/20 {
+        border-color: rgba(15, 23, 42, 0.12) !important;
+      }
+
+      .border-slate-900\/60 { border-color: rgba(15, 23, 42, 0.12) !important; }
+      .hover\:bg-slate-700:hover { background-color: #dce4ef !important; }
+      .hover\:text-white:hover { color: #172033 !important; }
+
+      #detail-sheet > .py-4 > .grid:last-child {
+        background: linear-gradient(to bottom, transparent, #ffffff 18%);
+      }
+
+      #detail-backdrop { background-color: rgba(15, 23, 42, 0.35) !important; }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #000000;
+      --card-bg: rgba(18, 18, 18, 0.97);
+      --card-border: rgba(255, 255, 255, 0.13);
+      --card-highlight: rgba(255, 255, 255, 0.045);
+      --accent-green: #2ee6a6;
+      --accent-green-glow: rgba(46, 230, 166, 0.2);
+      --accent-red: #ff647d;
+      --accent-amber: #f6c85f;
+      --accent-blue: #5ed8ff;
+    }
+
+    :root[data-theme="light"] {
+      --bg: #f4f7fb;
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --card-border: rgba(71, 85, 105, 0.16);
+      --card-highlight: rgba(15, 23, 42, 0.04);
+    }
+
+    :root[data-theme="dark"] body,
+    :root[data-theme="dark"] #app-viewport {
+      background-color: #000000 !important;
+      color: #f5f7f8 !important;
+    }
+
+    :root[data-theme="dark"] .glass-header {
+      background: rgba(0, 0, 0, 0.97);
+      border-bottom-color: rgba(255, 255, 255, 0.12);
+    }
+
+    :root[data-theme="dark"] .glass-nav {
+      background: rgba(8, 8, 8, 0.98);
+      border-top-color: rgba(255, 255, 255, 0.13);
+    }
+
+    :root[data-theme="dark"] .glass-card {
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+    }
+
+    :root[data-theme="dark"] .bg-slate-900\/90,
+    :root[data-theme="dark"] .bg-slate-900\/80,
+    :root[data-theme="dark"] .bg-slate-900\/60,
+    :root[data-theme="dark"] .bg-slate-800\/90,
+    :root[data-theme="dark"] .bg-slate-800\/80,
+    :root[data-theme="dark"] .bg-slate-800\/70,
+    :root[data-theme="dark"] .bg-slate-800 {
+      background-color: #171717 !important;
+    }
+
+    :root[data-theme="dark"] .bg-black\/40,
+    :root[data-theme="dark"] .bg-black\/30 {
+      background-color: #080808 !important;
+    }
+
+    :root[data-theme="dark"] .border-white\/5,
+    :root[data-theme="dark"] .border-white\/10,
+    :root[data-theme="dark"] .border-white\/15,
+    :root[data-theme="dark"] .border-white\/20 {
+      border-color: rgba(255, 255, 255, 0.13) !important;
+    }
+
+    :root[data-theme="dark"] .border-slate-900\/60 { border-color: #242424 !important; }
+    :root[data-theme="dark"] .text-slate-300 { color: #d0d0d0 !important; }
+    :root[data-theme="dark"] .text-slate-400 { color: #a2a2a2 !important; }
+    :root[data-theme="dark"] .text-slate-500 { color: #7a7a7a !important; }
+    :root[data-theme="dark"] .hover\:bg-slate-700:hover { background-color: #252525 !important; }
+
+    :root[data-theme="light"] body,
+    :root[data-theme="light"] #app-viewport {
+      background-color: #f4f7fb !important;
+      color: #17212b !important;
+    }
+
+    :root[data-theme="light"] .glass-header {
+      background: rgba(244, 247, 251, 0.94);
+      border-bottom-color: rgba(71, 85, 105, 0.15);
+    }
+
+    :root[data-theme="light"] .glass-nav {
+      background: rgba(255, 255, 255, 0.96);
+      border-top-color: rgba(71, 85, 105, 0.16);
+    }
+
+    :root[data-theme="light"] .glass-card {
+      box-shadow: 0 10px 26px rgba(71, 85, 105, 0.1);
+    }
+
+    :root[data-theme="light"] .text-white,
+    :root[data-theme="light"] .text-slate-100,
+    :root[data-theme="light"] .text-slate-200 {
+      color: #17212b !important;
+    }
+
+    :root[data-theme="light"] .text-slate-300 { color: #405064 !important; }
+    :root[data-theme="light"] .text-slate-400 { color: #607087 !important; }
+    :root[data-theme="light"] .text-slate-500 { color: #7b8ba0 !important; }
+
+    :root[data-theme="light"] .bg-slate-900\/90,
+    :root[data-theme="light"] .bg-slate-900\/80,
+    :root[data-theme="light"] .bg-slate-900\/60,
+    :root[data-theme="light"] .bg-slate-800\/90,
+    :root[data-theme="light"] .bg-slate-800\/80,
+    :root[data-theme="light"] .bg-slate-800\/70,
+    :root[data-theme="light"] .bg-slate-800 {
+      background-color: #e8eef5 !important;
+    }
+
+    :root[data-theme="light"] .bg-black\/40,
+    :root[data-theme="light"] .bg-black\/30 {
+      background-color: #e9eef4 !important;
+    }
+
+    :root[data-theme="light"] .border-white\/5,
+    :root[data-theme="light"] .border-white\/10,
+    :root[data-theme="light"] .border-white\/15,
+    :root[data-theme="light"] .border-white\/20 {
+      border-color: rgba(71, 85, 105, 0.16) !important;
+    }
+
+    :root[data-theme="light"] .border-slate-900\/60 { border-color: #d7e0eb !important; }
+    :root[data-theme="light"] .hover\:bg-slate-700:hover { background-color: #dce5ef !important; }
+    :root[data-theme="light"] .hover\:text-white:hover { color: #17212b !important; }
+
+    :root[data-theme="dark"] #detail-sheet > .py-4 > .grid:last-child {
+      background: linear-gradient(to bottom, transparent, #121212 18%);
+    }
+
+    :root[data-theme="light"] #detail-sheet > .py-4 > .grid:last-child {
+      background: linear-gradient(to bottom, transparent, #ffffff 18%);
+    }
+
+    .theme-toggle svg { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .sun-icon,
+    :root[data-theme="dark"] .theme-toggle .sun-icon,
+    :root[data-theme="light"] .theme-toggle .moon-icon { display: block; }
   </style>
 </head>
 <body class="bg-[#060913] text-slate-100 flex justify-center min-h-screen">
@@ -213,17 +444,9 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <!-- Live API Indicator / Mode Badge -->
-          <div id="connection-pill" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-[11px] font-medium text-slate-300">
-            <span id="conn-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span id="conn-label" class="truncate max-w-[80px]">Connecting…</span>
-          </div>
-
-          <!-- Quick Refresh Button -->
-          <button id="refresh-btn" class="tap-active p-2.5 rounded-2xl bg-slate-800/70 text-slate-200 border border-white/10 hover:bg-slate-700 active:rotate-180 transition-all" aria-label="Sync trades">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
+          <button id="theme-toggle" class="theme-toggle tap-active p-2.5 rounded-2xl bg-slate-800/70 text-slate-200 border border-white/10 hover:bg-slate-700 transition-all" aria-label="Switch to light theme" aria-pressed="false">
+            <svg class="sun-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke-width="2"></circle><path stroke-linecap="round" stroke-width="2" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+            <svg class="moon-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.6 6.6 0 0 0 21 12.8Z"></path></svg>
           </button>
           <button id="rules-btn" class="tap-active p-2.5 rounded-2xl bg-slate-800/70 text-slate-200 border border-white/10 hover:bg-slate-700" aria-label="Edit default playbook rules">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56v.08h-3v-.08A1.7 1.7 0 0 0 10.66 18.7a1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 15.04a1.7 1.7 0 0 0-1.56-1.04h-.08v-3h.08A1.7 1.7 0 0 0 7 9.96a1.7 1.7 0 0 0-.34-1.88L6.6 8.02 8.72 5.9l.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.04-1.56v-.08h3v.08a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19.4 9.96 1.7 1.7 0 0 0 20.96 11h.08v3h-.08A1.7 1.7 0 0 0 19.4 15Z"/></svg>
@@ -782,24 +1005,15 @@
     }
 
     function setStatus(text, state = 'syncing') {
-      const pill = $('#connection-pill');
-      const dot = $('#conn-dot');
-      const label = $('#conn-label');
       const island = $('#island-status');
 
-      label.textContent = text;
-      dot.className = 'w-2 h-2 rounded-full transition-all';
-
       if (state === 'online') {
-        dot.classList.add('bg-emerald-400');
         island.textContent = 'ONLINE';
         island.className = 'text-[10px] font-bold text-emerald-400 font-mono tracking-tight';
       } else if (state === 'error') {
-        dot.classList.add('bg-rose-400');
         island.textContent = 'OFFLINE';
         island.className = 'text-[10px] font-bold text-rose-400 font-mono tracking-tight';
       } else {
-        dot.classList.add('bg-amber-400', 'animate-ping');
         island.textContent = 'SYNCING';
         island.className = 'text-[10px] font-bold text-amber-400 font-mono tracking-tight';
       }
@@ -1830,6 +2044,17 @@
       }
     }
 
+    function applyTheme(theme) {
+      const root = document.documentElement;
+      const isLight = theme === 'light';
+      root.dataset.theme = theme;
+      localStorage.setItem('trade-ledger-theme', theme);
+      $('#theme-color-meta').content = isLight ? '#f4f7fb' : '#000000';
+      const toggle = $('#theme-toggle');
+      toggle.setAttribute('aria-pressed', String(isLight));
+      toggle.setAttribute('aria-label', isLight ? 'Switch to dark theme' : 'Switch to light theme');
+    }
+
     function setupEventListeners() {
       // Bottom navigation tabs
       $$('.tab-btn, #quick-log-btn').forEach(btn => {
@@ -1937,6 +2162,10 @@
       $('#rules-btn').addEventListener('click', () => navigateToScreen('screen-rules'));
       $('#save-rules-btn').addEventListener('click', saveDefaultRules);
       $('#export-csv-btn').addEventListener('click', downloadTradesCsv);
+      $('#theme-toggle').addEventListener('click', () => {
+        triggerHaptic();
+        applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+      });
 
       $$('.projection-period').forEach(button => {
         button.addEventListener('click', () => {
@@ -1970,11 +2199,6 @@
         $(selector).addEventListener('input', renderProjection);
       });
 
-      // Refresh button
-      $('#refresh-btn').addEventListener('click', () => {
-        triggerHaptic();
-        loadAllTrades();
-      });
     }
 
     function init() {
@@ -1983,6 +2207,9 @@
         weekday: 'short', day: 'numeric', month: 'short'
       }).format(new Date());
 
+      const savedTheme = localStorage.getItem('trade-ledger-theme');
+      const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      applyTheme(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : systemTheme);
       setupEventListeners();
       resetFormToDefaults();
       loadDefaultRules();
