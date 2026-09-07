@@ -424,15 +424,6 @@
 
   <div id="app-viewport" class="w-full max-w-[430px] min-h-screen flex flex-col relative bg-[#060913] shadow-2xl border-x border-slate-900/60 selection:bg-emerald-500/30">
     
-    <!-- iPhone Dynamic Island Placeholder Bar for aesthetic realism -->
-    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 pointer-events-none flex justify-center pt-2.5">
-      <div class="h-[28px] w-[116px] bg-black/90 rounded-full border border-white/5 flex items-center justify-between px-3 shadow-lg opacity-90 transition-all hover:scale-105">
-        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80 animate-pulse"></div>
-        <span class="text-[10px] font-semibold text-slate-400 font-mono tracking-tight" id="island-status">LIVE SYNC</span>
-        <div class="w-2.5 h-2.5 rounded-full bg-slate-700/60"></div>
-      </div>
-    </div>
-
     <!-- Header Navigation -->
     <header class="glass-header sticky top-0 z-40 safe-top-padding px-5 pb-3.5 transition-colors">
       <div class="flex items-center justify-between mt-3">
@@ -612,6 +603,21 @@
       <section id="screen-projections" class="screen-panel hidden space-y-3.5">
         <div class="glass-card rounded-3xl p-4 space-y-3">
           <div class="flex items-start justify-between gap-3">
+            <div><p class="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Monthly discipline board</p><h3 class="text-base font-extrabold text-white">₹5,000 target for this month</h3></div>
+            <span id="month-goal-status" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Planning</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Still needed</span><b id="month-remaining-target" class="text-xs font-mono text-white">—</b></div>
+            <div class="rounded-xl bg-slate-900/60 border border-white/5 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Trading days left</span><b id="month-days-pending" class="text-xs font-mono text-white">—</b></div>
+          </div>
+          <div class="rounded-xl bg-slate-900/60 border border-white/5 p-3">
+            <div class="flex items-center justify-between mb-2"><span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">All no-trade scenarios</span><span class="text-[10px] text-slate-500">minimum W / max L</span></div>
+            <div id="month-scenarios" class="space-y-2 max-h-64 overflow-y-auto pr-1"><p class="text-xs text-slate-500">Calculating…</p></div>
+          </div>
+          <p id="month-goal-note" class="rounded-xl bg-sky-500/5 border border-sky-400/15 p-2 text-[11px] leading-5 text-slate-400">Rows use your historical average win and loss. Any unused day can be breakeven or another non-loss result.</p>
+        </div>
+        <div class="glass-card rounded-3xl p-4 space-y-3">
+          <div class="flex items-start justify-between gap-3">
             <div><p class="text-[10px] font-bold uppercase tracking-widest text-sky-400">Forward view</p><h3 class="text-base font-extrabold text-white">Trading outcome range</h3></div>
             <span class="text-[10px] leading-4 text-right text-slate-400">Scenario tool<br>not a promise</span>
           </div>
@@ -660,8 +666,8 @@
               <p class="text-[11px] leading-5 text-slate-400">Use your own target and risk budget. The calculator does not choose a trade for you.</p>
             </div>
             <div class="grid grid-cols-2 gap-2">
-              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Target P&amp;L (₹)
-                <input id="projection-target" type="number" min="0" step="100" value="5000" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
+              <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Monthly target P&amp;L (₹)
+                <input id="projection-target" type="number" min="0" step="100" value="5000" readonly class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10 opacity-80">
               </label>
               <label class="space-y-1 text-[10px] font-bold uppercase text-slate-400">Planned trades
                 <input id="projection-planned-trades" type="number" min="1" step="1" value="20" class="w-full bg-slate-900/90 text-xs normal-case text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
@@ -1005,18 +1011,8 @@
     }
 
     function setStatus(text, state = 'syncing') {
-      const island = $('#island-status');
-
-      if (state === 'online') {
-        island.textContent = 'ONLINE';
-        island.className = 'text-[10px] font-bold text-emerald-400 font-mono tracking-tight';
-      } else if (state === 'error') {
-        island.textContent = 'OFFLINE';
-        island.className = 'text-[10px] font-bold text-rose-400 font-mono tracking-tight';
-      } else {
-        island.textContent = 'SYNCING';
-        island.className = 'text-[10px] font-bold text-amber-400 font-mono tracking-tight';
-      }
+      void text;
+      void state;
     }
 
     function getFallbackSeed() {
@@ -1723,10 +1719,86 @@
       };
     }
 
+    function getWeekdaysInMonth(year, month) {
+      const holidays = getExchangeHolidays(year);
+      const days = [];
+      const cursor = new Date(year, month, 1);
+      while (cursor.getMonth() === month) {
+        const dayKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
+        if (cursor.getDay() !== 0 && cursor.getDay() !== 6 && !holidays.has(dayKey)) {
+          days.push(new Date(cursor));
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return days;
+    }
+
+    function getExchangeHolidays(year) {
+      const holidayDates = {
+        2026: [
+          '2026-01-15', '2026-01-26', '2026-03-03', '2026-03-26',
+          '2026-03-31', '2026-04-03', '2026-04-14', '2026-05-01',
+          '2026-05-28', '2026-06-26', '2026-09-14', '2026-10-02',
+          '2026-10-20', '2026-11-08', '2026-11-10', '2026-11-24',
+          '2026-12-25'
+        ]
+      };
+      return new Set(holidayDates[year] || []);
+    }
+
+    function renderMonthlyGoal() {
+      const target = 5000;
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const holidays = getExchangeHolidays(now.getFullYear());
+      const weekdays = getWeekdaysInMonth(now.getFullYear(), now.getMonth());
+      const pendingDays = weekdays.filter(day => day > now);
+      const monthEntries = entries.filter(entry => entry.archived !== 'Y' && String(entry.trade_on).slice(0, 7) === monthKey);
+      const monthTraded = monthEntries.filter(entry => TRADED.has(entry.trade_result));
+      const currentNet = monthTraded.reduce((sum, entry) => sum + getNetValue(entry), 0);
+      const remaining = Math.max(0, target - currentNet);
+
+      const history = entries.filter(entry => entry.archived !== 'Y');
+      const wins = history.filter(entry => entry.trade_result === 'WIN');
+      const losses = history.filter(entry => entry.trade_result === 'LOSS');
+      const averageWin = wins.length ? wins.reduce((sum, entry) => sum + Math.max(0, getNetValue(entry)), 0) / wins.length : 0;
+      const averageLoss = losses.length ? losses.reduce((sum, entry) => sum + Math.abs(getNetValue(entry)), 0) / losses.length : 0;
+      const scenarioNoTradeDays = Array.from({ length: pendingDays.length + 1 }, (_, index) => index);
+      const scenarios = scenarioNoTradeDays.map(noTradeDays => {
+        const entryDays = pendingDays.length - noTradeDays;
+        let winsRequired = 0;
+        let lossesRequired = -1;
+        if (averageWin > 0 && averageLoss > 0) {
+          for (let losses = entryDays; losses >= 0; losses -= 1) {
+            const wins = Math.ceil((remaining + losses * averageLoss) / averageWin);
+            if (wins >= 0 && wins + losses <= entryDays) {
+              winsRequired = wins;
+              lossesRequired = losses;
+              break;
+            }
+          }
+        }
+        return { noTradeDays, entryDays, winsRequired, lossesRequired };
+      });
+
+      $('#month-remaining-target').textContent = formatShortMoney(remaining);
+      $('#month-days-pending').textContent = `${pendingDays.length}`;
+      $('#month-scenarios').innerHTML = remaining <= 0
+        ? '<p class="text-xs font-semibold text-emerald-300">Target reached for this month.</p>'
+        : averageWin <= 0 || averageLoss <= 0
+          ? '<p class="text-xs text-slate-500">Add at least one win and one loss to calculate scenarios.</p>'
+          : scenarios.map(scenario => `<div class="flex items-center justify-between rounded-lg bg-black/20 px-2.5 py-2"><span class="text-xs text-slate-300">${scenario.noTradeDays} no-trade day${scenario.noTradeDays === 1 ? '' : 's'} <span class="text-[10px] text-slate-500">(${scenario.entryDays} possible entries)</span></span><strong class="text-xs font-mono">${scenario.lossesRequired < 0 ? '<span class="text-slate-500">Not reachable</span>' : `<span class="text-emerald-300">${scenario.winsRequired}W</span><span class="text-slate-500"> / </span><span class="text-rose-300">${scenario.lossesRequired}L</span>`}</strong></div>`).join('');
+      $('#month-goal-status').textContent = remaining <= 0 ? 'Target reached' : 'Planning';
+      $('#month-goal-note').textContent = history.length < 5
+        ? `Based on your current month result and average historical win/loss size. NSE trading days exclude weekends and declared holidays.`
+        : `The table checks every no-trade count. It shows the minimum wins and maximum losses that can still reach the target; unused possible-entry days can be breakeven or another non-loss result.`;
+    }
+
     function renderProjection() {
       const svg = $('#projection-svg');
       if (!svg) return;
 
+      renderMonthlyGoal();
       const { daily, equity } = getProjectionHistory();
       const horizon = projectionDays;
       $('#projection-horizon-label').textContent = `${horizon} trading days`;
