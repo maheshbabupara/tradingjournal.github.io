@@ -7,7 +7,7 @@
   const datetime=d=>new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d));
   const cls=n=>n>0?'positive':n<0?'negative':'neutral';
   const outcomeClass=o=>String(o).split(' ')[0];
-  function net(e){if(!TRADED.has(e.trade_result))return 0;const p=Math.abs(Number(e.pl)||0),c=Math.abs(Number(e.charges)||0);return (e.trade_result==='WIN'?p:e.trade_result==='LOSS'?-p:0)-c}
+  function net(e){if(!TRADED.has(e.trade_result))return 0;const p=Math.abs(Number(e.pl)||0),c=Math.abs(Number(e.charges)||0);return e.trade_result==='WIN'?p-c:e.trade_result==='LOSS'?-p-c:p}
   const dayKey=e=>String(e.trade_on).slice(0,10);
   const keyDate=k=>new Date(`${k}T12:00:00`);
   const shortMoney=n=>`${n<0?'-':''}₹${Math.abs(n)>=1000?(Math.abs(n)/1000).toFixed(1)+'k':Math.round(Math.abs(n))}`;

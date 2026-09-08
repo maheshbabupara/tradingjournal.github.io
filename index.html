@@ -458,6 +458,16 @@
           <button data-period="all" class="period-btn flex-1 py-1.5 text-xs font-bold rounded-xl transition-all bg-emerald-500 text-slate-950 shadow-md">All Time</button>
           <button data-period="90" class="period-btn flex-1 py-1.5 text-xs font-medium text-slate-400 rounded-xl transition-all hover:text-white">90 Days</button>
           <button data-period="30" class="period-btn flex-1 py-1.5 text-xs font-medium text-slate-400 rounded-xl transition-all hover:text-white">30 Days</button>
+          <button data-period="custom" class="period-btn flex-1 py-1.5 text-xs font-medium text-slate-400 rounded-xl transition-all hover:text-white">Custom</button>
+        </div>
+        <div id="custom-range-controls" class="hidden grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
+          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">From
+            <input id="custom-range-start" type="date" class="mt-1 w-full bg-slate-900/90 text-xs text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
+          </label>
+          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">To
+            <input id="custom-range-end" type="date" class="mt-1 w-full bg-slate-900/90 text-xs text-slate-200 rounded-xl px-2.5 py-2 border border-white/10">
+          </label>
+          <button id="clear-custom-range" type="button" class="h-[34px] px-3 rounded-xl border border-white/10 text-xs font-bold text-slate-400 hover:text-white">Clear</button>
         </div>
 
         <!-- Metric KPI Cards (2x2 Grid) -->
@@ -497,10 +507,6 @@
           </div>
         </div>
 
-        <button class="nav-trigger tap-active w-full glass-card rounded-3xl p-4 flex items-center justify-between text-left" data-target="screen-projections">
-          <span><span class="block text-[10px] font-bold uppercase tracking-widest text-sky-400">Forward view</span><span class="block mt-1 text-sm font-bold text-slate-100">Project your equity curve</span></span>
-          <span class="text-sky-400 text-xl" aria-hidden="true">&#8594;</span>
-        </button>
       </section>
 
       <section id="screen-trades" class="screen-panel hidden space-y-3">
@@ -600,7 +606,7 @@
         </div>
       </section>
 
-      <section id="screen-projections" class="screen-panel hidden space-y-3.5">
+      <!-- Projection screen removed.
         <div class="glass-card rounded-3xl p-4 space-y-3">
           <div class="flex items-start justify-between gap-3">
             <div><p class="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Monthly discipline board</p><h3 class="text-base font-extrabold text-white">₹5,000 target for this month</h3></div>
@@ -692,7 +698,7 @@
           </div>
           <p id="projection-summary" class="text-[11px] leading-5 text-slate-400">Add trades to generate a projection.</p>
         </div>
-      </section>
+      </section> -->
 
       <section id="screen-entry" class="screen-panel hidden space-y-4">
         <div class="glass-card rounded-3xl p-5 border border-white/10 space-y-4">
@@ -821,13 +827,14 @@
           <span class="text-[10px] font-semibold">Calendar</span>
         </button>
 
-        <!-- Projections Tab -->
+        <!--
+        Projection navigation removed.
         <button data-tab="screen-projections" class="tab-btn tap-active flex flex-col items-center gap-1 text-slate-400 py-1 px-3">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
           </svg>
           <span class="text-[10px] font-semibold">Projection</span>
-        </button>
+        </button> -->
       </div>
     </nav>
 
@@ -918,9 +925,8 @@
     let analysisMode = 'daily';
     let calendarChartType = 'line';
     let calendarChartZoom = 1;
-    let projectionDays = 21;
-    let projectionRiskScale = 1;
-    let projectionBand = 0.1;
+    let selectedPeriod = localStorage.getItem('trade-ledger-period') || 'all';
+    let customRange = JSON.parse(localStorage.getItem('trade-ledger-custom-range') || '{"start":"","end":""}');
     let currentDetailId = null;
     let defaultTradeRules = '';
 
@@ -975,7 +981,7 @@
       const charges = Math.abs(Number(entry.charges) || 0);
       if (entry.trade_result === 'WIN') return profit - charges;
       if (entry.trade_result === 'LOSS') return -profit - charges;
-      return -charges;
+      return profit;
     };
 
     const getPnlClass = n => n > 0 ? 'text-emerald-400' : n < 0 ? 'text-rose-400' : 'text-amber-400';
@@ -1132,7 +1138,6 @@
         'screen-trades': 'Trade Log',
         'screen-calendar': 'Calendar & P&L',
         'screen-journal': 'Trader Mindset',
-        'screen-projections': 'Equity Projection',
         'screen-entry': $('#form-entry-id').value ? 'Edit Entry' : 'Log Trade',
         'screen-rules': 'Playbook Rules'
       };
@@ -1183,10 +1188,30 @@
       return trade.archived !== 'Y';
     }
 
-    function getFilteredEntries(selectedPeriod) {
-      const activePeriod = selectedPeriod || $('.period-btn.bg-emerald-500')?.dataset.period || 'all';
+    function updatePeriodControls() {
+      $$('.period-btn').forEach(button => {
+        const active = button.dataset.period === selectedPeriod;
+        button.classList.toggle('bg-emerald-500', active);
+        button.classList.toggle('text-slate-950', active);
+        button.classList.toggle('shadow-md', active);
+        button.classList.toggle('text-slate-400', !active);
+      });
+      $('#custom-range-controls').classList.toggle('hidden', selectedPeriod !== 'custom');
+    }
+
+    function getFilteredEntries(periodOverride) {
+      const activePeriod = periodOverride || selectedPeriod;
       const base = entries.filter(isArchiveVisible);
       if (activePeriod === 'all') return base;
+      if (activePeriod === 'custom') {
+        const start = customRange.start ? new Date(`${customRange.start}T00:00:00`) : null;
+        const end = customRange.end ? new Date(`${customRange.end}T23:59:59.999`) : null;
+        if (!start || !end || start > end) return [];
+        return base.filter(entry => {
+          const timestamp = new Date(entry.trade_on);
+          return timestamp >= start && timestamp <= end;
+        });
+      }
       const days = Number(activePeriod);
       return base.filter(e => new Date(e.trade_on) >= Date.now() - days * 864e5);
     }
@@ -1324,10 +1349,47 @@
         <line x1="${padL}" x2="${w - padR}" y1="${zeroY}" y2="${zeroY}" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
         <path d="${areaData}" fill="url(#${areaGradientId})" />
         <path d="${pathData}" fill="none" stroke="${strokeColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <line class="equity-crosshair" x1="0" x2="0" y1="${padT}" y2="${h - padB}" stroke="#cbd5e1" stroke-opacity=".55" stroke-dasharray="3 3" visibility="hidden"/>
+        <g>${points.map(point => `<circle class="equity-chart-point" cx="${getX(point.index)}" cy="${getY(point.total)}" r="10" fill="transparent" data-date="${escapeHtml(formatDate(point.item.trade_on))}" data-total="${point.total}"/><circle cx="${getX(point.index)}" cy="${getY(point.total)}" r="3" fill="${strokeColor}" pointer-events="none"/>`).join('')}</g>
         <!-- Start & End Date Labels -->
         <text x="${padL}" y="${h - 10}" fill="#94a3b8" font-size="9" font-family="monospace">${formatDate(points[0].item.trade_on)}</text>
         <text x="${w - padR}" y="${h - 10}" text-anchor="end" fill="#94a3b8" font-size="9" font-family="monospace">${formatDate(points.at(-1).item.trade_on)}</text>
       `;
+      $('#equity-container').insertAdjacentHTML('beforeend', '<div id="equity-tooltip" class="calendar-chart-tooltip hidden" role="status"></div>');
+      bindEquityChartInteractions();
+    }
+
+    function bindEquityChartInteractions() {
+      const container = $('#equity-container');
+      if (container.dataset.interactiveBound === 'true') return;
+      container.dataset.interactiveBound = 'true';
+      container.addEventListener('pointermove', event => {
+        const point = event.target.closest('.equity-chart-point');
+        const tooltip = $('#equity-tooltip');
+        const crosshair = container.querySelector('.equity-crosshair');
+        if (!point || !tooltip || !crosshair) {
+          tooltip?.classList.add('hidden');
+          if (crosshair) crosshair.setAttribute('visibility', 'hidden');
+          return;
+        }
+        const svg = $('#equity-svg');
+        const bounds = container.getBoundingClientRect();
+        const svgBounds = svg.getBoundingClientRect();
+        const scaleX = svg.viewBox.baseVal.width / svgBounds.width;
+        const x = Number(point.getAttribute('cx'));
+        crosshair.setAttribute('x1', x);
+        crosshair.setAttribute('x2', x);
+        crosshair.setAttribute('visibility', 'visible');
+        tooltip.textContent = `${point.dataset.date}: ${formatCurrency(Number(point.dataset.total))}`;
+        tooltip.style.left = `${event.clientX - bounds.left}px`;
+        tooltip.style.top = `${event.clientY - bounds.top}px`;
+        tooltip.classList.remove('hidden');
+        void scaleX;
+      });
+      container.addEventListener('pointerleave', () => {
+        $('#equity-tooltip')?.classList.add('hidden');
+        container.querySelector('.equity-crosshair')?.setAttribute('visibility', 'hidden');
+      });
     }
 
     function renderCalendar() {
@@ -1679,7 +1741,6 @@
       renderTradesList();
       renderCalendar();
       renderJournalList();
-      renderProjection();
     }
 
     function projectionPercentile(values, percentile) {
@@ -2152,14 +2213,37 @@
       $$('.period-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           triggerHaptic();
-          $$('.period-btn').forEach(b => {
-            b.classList.remove('bg-emerald-500', 'text-slate-950', 'shadow-md');
-            b.classList.add('text-slate-400');
-          });
-          btn.classList.add('bg-emerald-500', 'text-slate-950', 'shadow-md');
-          btn.classList.remove('text-slate-400');
+          selectedPeriod = btn.dataset.period;
+          localStorage.setItem('trade-ledger-period', selectedPeriod);
+          updatePeriodControls();
           renderOverview();
         });
+      });
+      $('#custom-range-start').addEventListener('change', event => {
+        customRange.start = event.target.value;
+        localStorage.setItem('trade-ledger-custom-range', JSON.stringify(customRange));
+        selectedPeriod = 'custom';
+        localStorage.setItem('trade-ledger-period', selectedPeriod);
+        updatePeriodControls();
+        renderOverview();
+      });
+      $('#custom-range-end').addEventListener('change', event => {
+        customRange.end = event.target.value;
+        localStorage.setItem('trade-ledger-custom-range', JSON.stringify(customRange));
+        selectedPeriod = 'custom';
+        localStorage.setItem('trade-ledger-period', selectedPeriod);
+        updatePeriodControls();
+        renderOverview();
+      });
+      $('#clear-custom-range').addEventListener('click', () => {
+        customRange = { start: '', end: '' };
+        localStorage.removeItem('trade-ledger-custom-range');
+        selectedPeriod = 'all';
+        localStorage.setItem('trade-ledger-period', selectedPeriod);
+        $('#custom-range-start').value = '';
+        $('#custom-range-end').value = '';
+        updatePeriodControls();
+        renderOverview();
       });
 
       // Analysis mode toggles
@@ -2239,38 +2323,6 @@
         applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
       });
 
-      $$('.projection-period').forEach(button => {
-        button.addEventListener('click', () => {
-          triggerHaptic();
-          projectionDays = Number(button.dataset.projectionDays) || 21;
-          $$('.projection-period').forEach(item => {
-            const selected = item === button;
-            item.classList.toggle('bg-sky-500', selected);
-            item.classList.toggle('text-slate-950', selected);
-            item.classList.toggle('font-extrabold', selected);
-            item.classList.toggle('text-slate-400', !selected);
-            item.classList.toggle('font-bold', !selected);
-          });
-          renderProjection();
-        });
-      });
-      $('#run-projection-btn').addEventListener('click', () => {
-        triggerHaptic();
-        renderProjection();
-      });
-      $('#projection-risk').addEventListener('input', event => {
-        projectionRiskScale = Number(event.target.value) || 1;
-        $('#projection-risk-label').textContent = `${projectionRiskScale.toFixed(2)}x`;
-        renderProjection();
-      });
-      $('#projection-confidence').addEventListener('change', event => {
-        projectionBand = Number(event.target.value) || 0.1;
-        renderProjection();
-      });
-      ['#projection-target', '#projection-planned-trades', '#projection-risk-budget', '#projection-target-per-trade'].forEach(selector => {
-        $(selector).addEventListener('input', renderProjection);
-      });
-
     }
 
     function init() {
@@ -2283,6 +2335,9 @@
       const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
       applyTheme(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : systemTheme);
       setupEventListeners();
+      $('#custom-range-start').value = customRange.start || '';
+      $('#custom-range-end').value = customRange.end || '';
+      updatePeriodControls();
       resetFormToDefaults();
       loadDefaultRules();
       loadAllTrades();
