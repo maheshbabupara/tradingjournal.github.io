@@ -12,6 +12,7 @@
   <title>Trade Ledger — iPhone 15 Edition</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -65,8 +66,13 @@
 
     #analysis-bars-chart {
       min-width: 0;
+      width: 100%;
+      min-height: 360px;
       overflow: hidden;
       touch-action: pan-x pan-y;
+      background: rgba(15, 23, 42, 0.24);
+      border-radius: 18px;
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.05);
     }
 
     .calendar-chart-tooltip {
@@ -83,6 +89,43 @@
       white-space: nowrap;
       transform: translate(-50%, calc(-100% - 10px));
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .chart-action {
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.32);
+      color: #cbd5e1;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .chart-fullscreen-button {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 5;
+    }
+    .chart-action:active { transform: scale(.94); }
+    #equity-chart-shell:fullscreen,
+    #analysis-chart-shell:fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-height: none !important;
+      border-radius: 0;
+      background: var(--bg);
+    }
+    #equity-chart-shell:fullscreen #equity-container {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    #analysis-chart-shell:fullscreen #analysis-bars-chart {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: none !important;
     }
 
     #calendar-chart-scroll {
@@ -106,10 +149,12 @@
 
     /* iOS Glassmorphism Effects */
     .glass-nav {
-      background: rgba(8, 12, 22, 0.82);
+      background: rgba(17, 25, 39, 0.58);
       backdrop-filter: blur(24px) saturate(190%);
       -webkit-backdrop-filter: blur(24px) saturate(190%);
-      border-top: 1px solid rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.32), inset 0 1px rgba(255, 255, 255, 0.08);
+      border-radius: 24px 24px 0 0;
     }
     
     .glass-header {
@@ -125,6 +170,30 @@
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    .bottom-nav-item {
+      min-width: 0;
+      flex: 1;
+      min-height: 48px;
+      border-radius: 16px;
+      color: rgba(203, 213, 225, 0.72);
+      transition: color .2s ease, background .2s ease, transform .2s ease;
+    }
+    .bottom-nav-item.text-emerald-400 {
+      background: rgba(16, 185, 129, 0.16);
+      color: #6ee7b7;
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+    }
+    .bottom-nav-log {
+      flex: 1;
+      min-width: 0;
+      min-height: 48px;
+      border-radius: 16px;
+      background: rgba(52, 211, 153, 0.16);
+      border: 1px solid rgba(110, 231, 183, 0.35);
+      color: #a7f3d0;
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.12);
     }
 
     .glass-card .justify-between {
@@ -309,17 +378,24 @@
     }
 
     :root[data-theme="dark"] .glass-header {
-      background: rgba(0, 0, 0, 0.97);
+      background: rgba(8, 12, 22, 0.62);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
       border-bottom-color: rgba(255, 255, 255, 0.12);
     }
 
     :root[data-theme="dark"] .glass-nav {
-      background: rgba(8, 8, 8, 0.98);
+      background: rgba(17, 25, 39, 0.58);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
       border-top-color: rgba(255, 255, 255, 0.13);
     }
 
     :root[data-theme="dark"] .glass-card {
-      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      background: rgba(18, 25, 41, 0.58);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
 
     :root[data-theme="dark"] .bg-slate-900\/90,
@@ -329,12 +405,12 @@
     :root[data-theme="dark"] .bg-slate-800\/80,
     :root[data-theme="dark"] .bg-slate-800\/70,
     :root[data-theme="dark"] .bg-slate-800 {
-      background-color: #171717 !important;
+      background-color: rgba(15, 23, 42, 0.48) !important;
     }
 
     :root[data-theme="dark"] .bg-black\/40,
     :root[data-theme="dark"] .bg-black\/30 {
-      background-color: #080808 !important;
+      background-color: rgba(2, 6, 23, 0.38) !important;
     }
 
     :root[data-theme="dark"] .border-white\/5,
@@ -357,17 +433,35 @@
     }
 
     :root[data-theme="light"] .glass-header {
-      background: rgba(244, 247, 251, 0.94);
+      background: rgba(244, 247, 251, 0.62);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
       border-bottom-color: rgba(71, 85, 105, 0.15);
     }
 
     :root[data-theme="light"] .glass-nav {
-      background: rgba(255, 255, 255, 0.96);
+      background: rgba(255, 255, 255, 0.58);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
       border-top-color: rgba(71, 85, 105, 0.16);
     }
 
+    :root[data-theme="light"] .bottom-nav-item {
+      color: #52627a;
+    }
+
+    :root[data-theme="light"] .bottom-nav-item.text-emerald-400,
+    :root[data-theme="light"] .bottom-nav-log {
+      color: #047857;
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(5, 150, 105, 0.28);
+    }
+
     :root[data-theme="light"] .glass-card {
-      box-shadow: 0 10px 26px rgba(71, 85, 105, 0.1);
+      background: rgba(255, 255, 255, 0.58);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      box-shadow: 0 12px 30px rgba(71, 85, 105, 0.1), inset 0 1px rgba(255, 255, 255, 0.7);
     }
 
     :root[data-theme="light"] .text-white,
@@ -392,7 +486,7 @@
 
     :root[data-theme="light"] .bg-black\/40,
     :root[data-theme="light"] .bg-black\/30 {
-      background-color: #e9eef4 !important;
+      background-color: rgba(226, 232, 240, 0.68) !important;
     }
 
     :root[data-theme="light"] .border-white\/5,
@@ -405,6 +499,55 @@
     :root[data-theme="light"] .border-slate-900\/60 { border-color: #d7e0eb !important; }
     :root[data-theme="light"] .hover\:bg-slate-700:hover { background-color: #dce5ef !important; }
     :root[data-theme="light"] .hover\:text-white:hover { color: #17212b !important; }
+
+    :root[data-theme="light"] input,
+    :root[data-theme="light"] textarea,
+    :root[data-theme="light"] select {
+      color: #17212b !important;
+      background-color: rgba(255, 255, 255, 0.72) !important;
+      border-color: rgba(71, 85, 105, 0.24) !important;
+    }
+
+    :root[data-theme="light"] input::placeholder,
+    :root[data-theme="light"] textarea::placeholder {
+      color: #64748b !important;
+      opacity: 1;
+    }
+
+    :root[data-theme="light"] .calendar-chart-tooltip {
+      background: rgba(255, 255, 255, 0.92);
+      border-color: rgba(71, 85, 105, 0.25);
+      color: #17212b;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+    }
+
+    :root[data-theme="light"] #analysis-bars-chart {
+      background: rgba(255, 255, 255, 0.42);
+      box-shadow: inset 0 1px rgba(71, 85, 105, 0.08);
+    }
+
+    :root[data-theme="light"] .chart-action {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: rgba(71, 85, 105, 0.25);
+      color: #334155;
+    }
+
+    :root[data-theme="light"] #screen-calendar .bg-slate-900\/90,
+    :root[data-theme="light"] #screen-calendar .bg-slate-900\/80,
+    :root[data-theme="light"] #screen-calendar .bg-slate-900\/60,
+    :root[data-theme="light"] #screen-calendar .bg-slate-900\/50 {
+      background-color: rgba(255, 255, 255, 0.68) !important;
+    }
+
+    :root[data-theme="light"] #screen-calendar .text-slate-200,
+    :root[data-theme="light"] #screen-calendar .text-slate-300 {
+      color: #26364d !important;
+    }
+
+    :root[data-theme="light"] #screen-calendar .text-slate-400,
+    :root[data-theme="light"] #screen-calendar .text-slate-500 {
+      color: #52627a !important;
+    }
 
     :root[data-theme="dark"] #detail-sheet > .py-4 > .grid:last-child {
       background: linear-gradient(to bottom, transparent, #121212 18%);
@@ -486,8 +629,9 @@
               ₹0
             </div>
           </div>
-          <div id="equity-container" class="relative w-full h-[190px] rounded-2xl bg-black/40 border border-white/5 overflow-hidden flex items-center justify-center">
-            <svg id="equity-svg" class="w-full h-full p-1" viewBox="0 0 600 190" preserveAspectRatio="none"></svg>
+          <div id="equity-chart-shell" class="relative w-full h-[190px] rounded-2xl bg-black/40 border border-white/5 overflow-hidden flex items-center justify-center">
+            <button type="button" class="chart-action chart-fullscreen-button" data-chart-action="fullscreen" data-chart-target="equity-chart-shell" aria-label="Open equity chart fullscreen" title="Fullscreen">⛶</button>
+            <div id="equity-container" class="w-full h-full"></div>
           </div>
         </div>
 
@@ -560,12 +704,24 @@
 
         <!-- Days of week -->
         <div class="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider py-1 px-1">
-          <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+          <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
         </div>
 
         <!-- Calendar Heatmap Grid -->
         <div id="calendar-grid-cells" class="grid grid-cols-7 gap-1.5">
           <!-- 35-42 cells rendered by JS -->
+        </div>
+
+        <div class="glass-card rounded-3xl p-4 space-y-3">
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Monthly summary</p>
+            <h3 id="calendar-summary-label" class="text-sm font-bold text-slate-200">Month P&amp;L</h3>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="rounded-2xl bg-slate-900/50 border border-white/10 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Net P&amp;L</span><b id="calendar-month-net" class="text-xs font-mono text-emerald-300">₹0</b></div>
+            <div class="rounded-2xl bg-slate-900/50 border border-white/10 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Gross P&amp;L</span><b id="calendar-month-gross" class="text-xs font-mono text-slate-200">₹0</b></div>
+            <div class="rounded-2xl bg-slate-900/50 border border-white/10 p-2"><span class="block text-[9px] uppercase font-bold text-slate-400">Charges</span><b id="calendar-month-charges" class="text-xs font-mono text-rose-300">₹0</b></div>
+          </div>
         </div>
 
         <!-- Segmented Analysis Mode (Daily/Weekly/Monthly) -->
@@ -588,7 +744,11 @@
             <button data-chart-type="line" class="chart-type-toggle flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-emerald-500 text-slate-950">Line</button>
             <button data-chart-type="candle" class="chart-type-toggle flex-1 py-1.5 text-xs font-medium text-slate-400 rounded-lg transition-all hover:text-white">Candle</button>
           </div>
-          <div id="analysis-bars-chart" class="max-h-[460px] border-b border-white/10 overflow-y-auto overscroll-y-contain"></div>
+          <div id="analysis-ohlc" class="hidden rounded-xl border border-white/10 bg-slate-900/40 px-3 py-2 text-[10px] font-mono text-slate-400" aria-live="polite">Hover a candle to see OHLC.</div>
+          <div id="analysis-chart-shell" class="relative">
+            <button type="button" class="chart-action chart-fullscreen-button" data-chart-action="fullscreen" data-chart-target="analysis-chart-shell" aria-label="Open calendar chart fullscreen" title="Fullscreen">⛶</button>
+            <div id="analysis-bars-chart" class="max-h-[460px] border-b border-white/10 overflow-y-auto overscroll-y-contain"></div>
+          </div>
           <div id="analysis-breakdown-list" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
         </div>
       </section>
@@ -792,9 +952,9 @@
     </main>
 
     <nav class="glass-nav fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 safe-bottom-padding px-3 pt-2">
-      <div class="flex items-center justify-around relative pb-1">
+      <div class="flex items-center gap-1.5 pb-1">
         <!-- Overview Tab -->
-        <button data-tab="screen-overview" class="tab-btn tap-active flex flex-col items-center gap-1 text-emerald-400 py-1 px-3">
+        <button data-tab="screen-overview" class="tab-btn bottom-nav-item tap-active flex flex-col items-center justify-center gap-1 text-emerald-400 py-1 px-2">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
           </svg>
@@ -802,29 +962,26 @@
         </button>
 
         <!-- Trades Tab -->
-        <button data-tab="screen-trades" class="tab-btn tap-active flex flex-col items-center gap-1 text-slate-400 py-1 px-3">
+        <button data-tab="screen-trades" class="tab-btn bottom-nav-item tap-active flex flex-col items-center justify-center gap-1 text-slate-400 py-1 px-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
           </svg>
           <span class="text-[10px] font-semibold">Trades</span>
         </button>
 
-        <!-- Center Floating Action Log Button -->
-        <div class="-mt-6 flex flex-col items-center">
-          <button id="quick-log-btn" data-tab="screen-entry" class="tap-active w-13 h-13 p-3.5 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-300 text-slate-950 font-extrabold shadow-lg shadow-emerald-500/40 border-4 border-[#060913] hover:scale-105 transition-all flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path>
-            </svg>
-          </button>
-          <span class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Log</span>
-        </div>
-
         <!-- Calendar Tab -->
-        <button data-tab="screen-calendar" class="tab-btn tap-active flex flex-col items-center gap-1 text-slate-400 py-1 px-3">
+        <button data-tab="screen-calendar" class="tab-btn bottom-nav-item tap-active flex flex-col items-center justify-center gap-1 text-slate-400 py-1 px-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
           <span class="text-[10px] font-semibold">Calendar</span>
+        </button>
+
+        <button id="quick-log-btn" data-tab="screen-entry" class="bottom-nav-log tap-active flex flex-col items-center justify-center gap-1 py-1 px-2" aria-label="Log a trade">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <span class="text-[10px] font-bold">Log</span>
         </button>
 
         <!--
@@ -885,6 +1042,11 @@
           <div id="detail-rules" class="p-3.5 rounded-2xl bg-black/40 border border-white/5 text-sm text-slate-300 font-mono leading-relaxed whitespace-pre-wrap"></div>
         </div>
 
+        <div id="calendar-day-trades" class="hidden space-y-2">
+          <p id="calendar-day-trades-label" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Trades</p>
+          <div id="calendar-day-trades-list" class="space-y-2"></div>
+        </div>
+
         <!-- Sheet Actions -->
         <div class="grid grid-cols-3 gap-2 pt-2">
           <button id="sheet-edit-btn" class="tap-active py-3 rounded-2xl bg-slate-800 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-slate-700">
@@ -925,9 +1087,12 @@
     let analysisMode = 'daily';
     let calendarChartType = 'line';
     let calendarChartZoom = 1;
+    let equityChart = null;
+    let analysisChart = null;
     let selectedPeriod = localStorage.getItem('trade-ledger-period') || 'all';
     let customRange = JSON.parse(localStorage.getItem('trade-ledger-custom-range') || '{"start":"","end":""}');
     let currentDetailId = null;
+    let calendarDayDetailOpen = false;
     let defaultTradeRules = '';
 
     // Helpers
@@ -1154,6 +1319,9 @@
       if (targetScreenId === 'screen-entry' && !$('#form-entry-id').value) {
         resetFormToDefaults();
       }
+      if (targetScreenId === 'screen-calendar') {
+        requestAnimationFrame(() => renderCalendar());
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1295,6 +1463,51 @@
     }
 
     function renderEquityChart(list) {
+      const chartHost = $('#equity-container');
+      if (!list.length) {
+        chartHost.innerHTML = '<p class="text-center text-xs text-slate-500">No trades available for performance curve</p>';
+        return;
+      }
+      if (!window.LightweightCharts) {
+        chartHost.innerHTML = '<p class="text-center text-xs text-slate-500">Chart library unavailable</p>';
+        return;
+      }
+      if (equityChart) equityChart.remove();
+      chartHost.innerHTML = '';
+      const chronList = [...list].sort((a, b) => new Date(a.trade_on) - new Date(b.trade_on));
+      let runningTotal = 0;
+      const dailyTotals = new Map();
+      chronList.forEach(item => {
+        const day = String(item.trade_on).slice(0, 10);
+        dailyTotals.set(day, (dailyTotals.get(day) || 0) + getNetValue(item));
+      });
+      const data = [...dailyTotals.entries()].map(([day, total]) => {
+        runningTotal += total;
+        return { time: day, value: runningTotal };
+      });
+      const positive = runningTotal >= 0;
+      const lightChart = document.documentElement.dataset.theme === 'light';
+      const chartText = lightChart ? '#52627a' : '#94a3b8';
+      const chartGrid = lightChart ? 'rgba(71, 85, 105, 0.14)' : 'rgba(148, 163, 184, 0.08)';
+      const chartBorder = lightChart ? 'rgba(71, 85, 105, 0.24)' : 'rgba(148, 163, 184, 0.16)';
+      equityChart = LightweightCharts.createChart(chartHost, {
+        width: chartHost.clientWidth,
+        height: 190,
+        layout: { background: { type: 'solid', color: 'transparent' }, textColor: chartText, fontFamily: 'JetBrains Mono, monospace', fontSize: 10 },
+        grid: { vertLines: { color: chartGrid }, horzLines: { color: chartGrid } },
+        rightPriceScale: { borderColor: chartBorder },
+        timeScale: { borderColor: chartBorder, timeVisible: false, rightOffset: 3 },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: '#38bdf8', width: 1, style: 2 }, horzLine: { color: '#38bdf8', width: 1, style: 2 } },
+        handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
+        handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false }
+      });
+      const series = equityChart.addAreaSeries({ lineColor: positive ? '#10b981' : '#f43f5e', topColor: positive ? 'rgba(16, 185, 129, 0.28)' : 'rgba(244, 63, 94, 0.28)', bottomColor: 'rgba(15, 23, 42, 0)', lineWidth: 2, priceLineVisible: true, lastValueVisible: true });
+      series.setData(data);
+      equityChart.timeScale().fitContent();
+      new ResizeObserver(() => equityChart?.applyOptions({ width: chartHost.clientWidth })).observe(chartHost);
+      return;
+
+      {
       const container = $('#equity-svg');
       if (!list.length) {
         container.innerHTML = `<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-size="13">No trades available for performance curve</text>`;
@@ -1357,6 +1570,7 @@
       `;
       $('#equity-container').insertAdjacentHTML('beforeend', '<div id="equity-tooltip" class="calendar-chart-tooltip hidden" role="status"></div>');
       bindEquityChartInteractions();
+      }
     }
 
     function bindEquityChartInteractions() {
@@ -1411,8 +1625,25 @@
         month: 'long', year: 'numeric'
       }).format(calendarCursor);
 
+      const monthEntries = activeEntries.filter(entry => {
+        const entryDate = new Date(entry.trade_on);
+        return entryDate.getFullYear() === year && entryDate.getMonth() === month;
+      });
+      const monthNet = monthEntries.reduce((sum, entry) => sum + getNetValue(entry), 0);
+      const monthGross = monthEntries.filter(entry => TRADED.has(entry.trade_result)).reduce((sum, entry) => {
+        const gross = Math.abs(Number(entry.pl) || 0);
+        return sum + (entry.trade_result === 'LOSS' ? -gross : entry.trade_result === 'WIN' ? gross : 0);
+      }, 0);
+      const monthCharges = monthEntries.filter(entry => TRADED.has(entry.trade_result)).reduce((sum, entry) => sum + Math.abs(Number(entry.charges) || 0), 0);
+      $('#calendar-summary-label').textContent = `${new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' }).format(calendarCursor)} P&L`;
+      $('#calendar-month-net').textContent = `${monthNet >= 0 ? '+' : ''}${formatCurrency(monthNet)}`;
+      $('#calendar-month-net').className = `text-xs font-mono ${getPnlClass(monthNet)}`;
+      $('#calendar-month-gross').textContent = `${monthGross >= 0 ? '+' : ''}${formatCurrency(monthGross)}`;
+      $('#calendar-month-gross').className = `text-xs font-mono ${getPnlClass(monthGross)}`;
+      $('#calendar-month-charges').textContent = formatCurrency(monthCharges);
+
       // Grid generation
-      const firstDayOffset = (new Date(year, month, 1).getDay() + 6) % 7; // Monday start
+      const firstDayOffset = new Date(year, month, 1).getDay(); // Sunday start
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const cells = [];
 
@@ -1441,7 +1672,7 @@
         }
 
         cells.push(`
-          <div class="aspect-square rounded-xl p-1 border flex flex-col justify-between items-center transition-all ${cellStyle} ${dayData ? 'cursor-pointer hover:border-emerald-400 tap-active' : ''}">
+          <div class="aspect-square rounded-xl p-1 border flex flex-col justify-between items-center transition-all ${cellStyle} ${dayData ? 'cursor-pointer hover:border-emerald-400 tap-active' : ''}" ${dayData ? `data-calendar-day="${dayKey}" role="button" tabindex="0"` : ''}>
             <span class="text-[11px] leading-none">${d}</span>
             ${amountSnippet}
           </div>
@@ -1480,7 +1711,9 @@
 
       const chartContainer = $('#analysis-bars-chart');
 
-      if (!groups.length) {
+      if (window.LightweightCharts) {
+        renderLightweightAnalysisChart(groups, chartContainer);
+      } else if (!groups.length) {
         chartContainer.innerHTML = '<p class="w-full text-center text-xs text-slate-500 py-6">No trades found in selected group.</p>';
       } else {
         const chronological = groups.slice().reverse();
@@ -1492,13 +1725,13 @@
         const padRight = 12;
         const padTop = 28;
         const padBottom = 42;
-        let running = 0;
-        const candles = points.map(point => {
-          const open = running;
-          const close = running + point.total;
-          running = close;
-          return { point, open, close, high: Math.max(open, close), low: Math.min(open, close) };
-        });
+        const candles = points.map(point => ({
+          point,
+          open: point.open,
+          close: point.close,
+          high: point.high,
+          low: point.low
+        }));
         const min = Math.min(0, ...candles.map(candle => candle.low));
         const max = Math.max(0, ...candles.map(candle => candle.high));
         const span = max - min || 1;
@@ -1508,27 +1741,29 @@
         const grid = [min, (min + max) / 2, max].map(value => `<line x1="${padLeft}" x2="${width - padRight}" y1="${y(value)}" y2="${y(value)}" stroke="#334155" stroke-opacity=".45"/>`).join('');
         const axis = [min, (min + max) / 2, max].map(value => `<text x="48" y="${y(value) + 4}" text-anchor="end" fill="#94a3b8" font-size="10">${formatChartAxis(value)}</text>`).join('');
         const chart = calendarChartType === 'line'
-          ? `<path d="${candles.map((candle, index) => `${index ? 'L' : 'M'}${x(index)},${y(candle.close)}`).join(' ')}" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><g>${candles.map((candle, index) => `<circle class="calendar-chart-point" cx="${x(index)}" cy="${y(candle.close)}" r="8" fill="transparent" data-label="${escapeHtml(candle.point.label)}" data-total="${candle.point.total}" data-count="${candle.point.count}"/><circle cx="${x(index)}" cy="${y(candle.close)}" r="3" fill="#38bdf8"/>`).join('')}</g>`
+          ? `<path d="${candles.map((candle, index) => `${index ? 'L' : 'M'}${x(index)},${y(candle.close)}`).join(' ')}" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><g>${candles.map((candle, index) => `<circle class="calendar-chart-point" cx="${x(index)}" cy="${y(candle.close)}" r="8" fill="transparent" data-label="${escapeHtml(candle.point.label)}" data-total="${candle.point.total}" data-count="${candle.point.count}" data-open="${candle.open}" data-high="${candle.high}" data-low="${candle.low}" data-close="${candle.close}"/><circle cx="${x(index)}" cy="${y(candle.close)}" r="3" fill="#38bdf8"/>`).join('')}</g>`
           : candles.map((candle, index) => {
             const color = candle.close >= candle.open ? '#34d399' : '#fb7185';
             const bodyTop = Math.min(y(candle.open), y(candle.close));
             const bodyHeight = Math.max(2, Math.abs(y(candle.close) - y(candle.open)));
             const candleWidth = Math.min(24, Math.max(8, (width - padLeft - padRight) / Math.max(1, points.length) * 0.5));
-            return `<g class="calendar-chart-point" data-label="${escapeHtml(candle.point.label)}" data-total="${candle.point.total}" data-count="${candle.point.count}"><line x1="${x(index)}" x2="${x(index)}" y1="${y(candle.high)}" y2="${y(candle.low)}" stroke="${color}" stroke-width="1.5"/><rect x="${x(index) - candleWidth / 2}" y="${bodyTop}" width="${candleWidth}" height="${bodyHeight}" rx="2" fill="${color}" fill-opacity=".9"><title>${escapeHtml(candle.point.label)}: ${formatCurrency(candle.point.total)} (${candle.point.count} ${candle.point.count === 1 ? 'trade' : 'trades'})</title></rect></g>`;
+            return `<g class="calendar-chart-point" data-label="${escapeHtml(candle.point.label)}" data-total="${candle.point.total}" data-count="${candle.point.count}" data-open="${candle.open}" data-high="${candle.high}" data-low="${candle.low}" data-close="${candle.close}"><line x1="${x(index)}" x2="${x(index)}" y1="${y(candle.high)}" y2="${y(candle.low)}" stroke="${color}" stroke-width="1.5"/><rect x="${x(index) - candleWidth / 2}" y="${bodyTop}" width="${candleWidth}" height="${bodyHeight}" rx="2" fill="${color}" fill-opacity=".9"><title>${escapeHtml(candle.point.label)}: O ${formatCurrency(candle.open)} H ${formatCurrency(candle.high)} L ${formatCurrency(candle.low)} C ${formatCurrency(candle.close)} (${candle.point.count} ${candle.point.count === 1 ? 'trade' : 'trades'})</title></rect></g>`;
           }).join('');
         const plotSvg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${labels[analysisMode]} net profit and loss ${calendarChartType} chart"><title>${labels[analysisMode]} net profit and loss ${calendarChartType} chart</title>${grid}<line x1="${padLeft}" x2="${width - padRight}" y1="${zeroY}" y2="${zeroY}" stroke="#cbd5e1" stroke-opacity=".65" stroke-width="1.5"/>${chart}<text x="${padLeft}" y="${height - 8}" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points[0], analysisMode))}</text><text x="${width - padRight}" y="${height - 8}" text-anchor="end" fill="#94a3b8" font-size="9">${escapeHtml(formatAnalysisLabel(points.at(-1), analysisMode))}</text></svg>`;
         const axisSvg = `<svg width="52" height="${height}" viewBox="0 0 52 ${height}" aria-hidden="true"><line x1="51" x2="51" y1="${padTop}" y2="${height - padBottom}" stroke="#475569"/>${axis}</svg>`;
         chartContainer.innerHTML = `<div class="grid grid-cols-[52px_minmax(0,1fr)]" style="height:${height}px"><div class="sticky left-0 z-10 bg-slate-950/70">${axisSvg}</div><div id="calendar-chart-scroll" class="relative overflow-x-auto overflow-y-hidden overscroll-x-contain">${plotSvg}<div class="calendar-chart-tooltip hidden" role="status"></div></div></div>`;
       }
-      bindCalendarChartPinch(chartContainer);
-      bindCalendarChartHover(chartContainer);
-      const scrollToLatest = () => {
-        const scroll = $('#calendar-chart-scroll');
-        if (scroll) scroll.scrollLeft = scroll.scrollWidth - scroll.clientWidth;
-      };
-      scrollToLatest();
-      requestAnimationFrame(scrollToLatest);
-      setTimeout(scrollToLatest, 0);
+      if (!window.LightweightCharts) {
+        bindCalendarChartPinch(chartContainer);
+        bindCalendarChartHover(chartContainer);
+        const scrollToLatest = () => {
+          const scroll = $('#calendar-chart-scroll');
+          if (scroll) scroll.scrollLeft = scroll.scrollWidth - scroll.clientWidth;
+        };
+        scrollToLatest();
+        requestAnimationFrame(scrollToLatest);
+        setTimeout(scrollToLatest, 0);
+      }
 
       // Breakdown rows
       const breakdown = $('#analysis-breakdown-list');
@@ -1547,6 +1782,57 @@
           </div>
         `).join('');
       }
+    }
+
+    function renderLightweightAnalysisChart(groups, chartContainer) {
+      if (analysisChart) {
+        analysisChart.remove();
+        analysisChart = null;
+      }
+      chartContainer.innerHTML = '';
+      if (!groups.length) {
+        chartContainer.innerHTML = '<p class="w-full text-center text-xs text-slate-500 py-6">No trades found in selected group.</p>';
+        return;
+      }
+      const chronological = groups.slice().reverse();
+      const lightChart = document.documentElement.dataset.theme === 'light';
+      const chartText = lightChart ? '#52627a' : '#94a3b8';
+      const chartGrid = lightChart ? 'rgba(71, 85, 105, 0.14)' : 'rgba(148, 163, 184, 0.08)';
+      const chartBorder = lightChart ? 'rgba(71, 85, 105, 0.24)' : 'rgba(148, 163, 184, 0.16)';
+      analysisChart = LightweightCharts.createChart(chartContainer, {
+        width: Math.max(280, chartContainer.clientWidth),
+        height: 360,
+        layout: { background: { type: 'solid', color: 'transparent' }, textColor: chartText, fontFamily: 'JetBrains Mono, monospace', fontSize: 10 },
+        grid: { vertLines: { color: chartGrid }, horzLines: { color: chartGrid } },
+        rightPriceScale: { borderColor: chartBorder },
+        timeScale: { borderColor: chartBorder, timeVisible: false, rightOffset: 4 },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: '#38bdf8', width: 1, style: 2 }, horzLine: { color: '#38bdf8', width: 1, style: 2 } },
+        handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
+        handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false }
+      });
+      const data = chronological.map(group => ({ time: group.key, open: group.open, high: group.high, low: group.low, close: group.close }));
+      let analysisSeries;
+      if (calendarChartType === 'candle') {
+        analysisSeries = analysisChart.addCandlestickSeries({ upColor: '#34d399', downColor: '#fb7185', borderUpColor: '#34d399', borderDownColor: '#fb7185', wickUpColor: '#34d399', wickDownColor: '#fb7185', priceLineVisible: true });
+        analysisSeries.setData(data);
+      } else {
+        analysisSeries = analysisChart.addLineSeries({ color: '#38bdf8', lineWidth: 2, priceLineVisible: true, lastValueVisible: true });
+        analysisSeries.setData(data.map(item => ({ time: item.time, value: item.close })));
+      }
+      analysisChart.subscribeCrosshairMove(param => {
+        const readout = $('#analysis-ohlc');
+        const point = param.seriesData?.get(analysisSeries);
+        if (!readout || !point || calendarChartType !== 'candle') {
+          readout?.classList.add('hidden');
+          return;
+        }
+        readout.textContent = `O ${formatCurrency(point.open)}   H ${formatCurrency(point.high)}   L ${formatCurrency(point.low)}   C ${formatCurrency(point.close)}`;
+        readout.classList.remove('hidden');
+      });
+      analysisChart.timeScale().fitContent();
+      new ResizeObserver(() => {
+        if (chartContainer.clientWidth > 0) analysisChart?.applyOptions({ width: chartContainer.clientWidth });
+      }).observe(chartContainer);
     }
 
     function bindCalendarChartPinch(chartContainer) {
@@ -1599,7 +1885,8 @@
           return;
         }
         const bounds = scroll.getBoundingClientRect();
-        tooltip.textContent = `${point.dataset.label}: ${formatCurrency(Number(point.dataset.total))} | ${point.dataset.count} ${point.dataset.count === '1' ? 'trade' : 'trades'}`;
+        const ohlc = point.dataset.open ? `O ${formatCurrency(Number(point.dataset.open))} H ${formatCurrency(Number(point.dataset.high))} L ${formatCurrency(Number(point.dataset.low))} C ${formatCurrency(Number(point.dataset.close))}` : `${formatCurrency(Number(point.dataset.total))}`;
+        tooltip.textContent = `${point.dataset.label} | ${ohlc} | ${point.dataset.count} ${point.dataset.count === '1' ? 'trade' : 'trades'}`;
         tooltip.style.left = `${event.clientX - bounds.left + scroll.scrollLeft}px`;
         tooltip.style.top = `${event.clientY - bounds.top + scroll.scrollTop}px`;
         tooltip.classList.remove('hidden');
@@ -1611,7 +1898,8 @@
 
     function calculatePeriodGroups(mode, list) {
       const map = new Map();
-      list.forEach(entry => {
+      let runningEquity = 0;
+      getSortedEntries(list).reverse().forEach(entry => {
         const dateObj = new Date(String(entry.trade_on).slice(0, 10) + 'T12:00:00');
         let key, label;
         if (mode === 'daily') {
@@ -1627,9 +1915,17 @@
           label = new Intl.DateTimeFormat('en-IN', { month: 'short', year: 'numeric' }).format(dateObj);
         }
 
-        const current = map.get(key) || { key, label, total: 0, count: 0 };
-        current.total += getNetValue(entry);
+        const tradeNet = getNetValue(entry);
+        const previousClose = runningEquity;
+        runningEquity += tradeNet;
+        const current = map.get(key) || {
+          key, label, total: 0, count: 0, open: previousClose, high: previousClose, low: previousClose, close: runningEquity
+        };
+        current.total += tradeNet;
         current.count += 1;
+        current.high = Math.max(current.high, previousClose, runningEquity);
+        current.low = Math.min(current.low, previousClose, runningEquity);
+        current.close = runningEquity;
         map.set(key, current);
       });
       return [...map.values()].sort((a, b) => b.key.localeCompare(a.key));
@@ -1984,6 +2280,11 @@
     async function openTradeDetail(id) {
       triggerHaptic();
       currentDetailId = id;
+      calendarDayDetailOpen = false;
+      $('#calendar-day-trades').classList.add('hidden');
+      $('#sheet-edit-btn').classList.remove('hidden');
+      $('#sheet-archive-btn').classList.remove('hidden');
+      $('#sheet-delete-btn').classList.remove('hidden');
       let record = entries.find(x => String(x.id) === String(id));
 
       try {
@@ -2028,6 +2329,46 @@
       sheet.classList.add('sheet-enter');
     }
 
+    function openCalendarDayDetails(dayKey) {
+      const dayTrades = getSortedEntries(entries.filter(entry => entry.archived !== 'Y' && String(entry.trade_on).slice(0, 10) === dayKey));
+      if (!dayTrades.length) return;
+      triggerHaptic();
+      calendarDayDetailOpen = true;
+      currentDetailId = null;
+      const net = dayTrades.reduce((sum, entry) => sum + getNetValue(entry), 0);
+      const gross = dayTrades.filter(entry => TRADED.has(entry.trade_result)).reduce((sum, entry) => {
+        const amount = Math.abs(Number(entry.pl) || 0);
+        return sum + (entry.trade_result === 'LOSS' ? -amount : entry.trade_result === 'WIN' ? amount : 0);
+      }, 0);
+      const charges = dayTrades.filter(entry => TRADED.has(entry.trade_result)).reduce((sum, entry) => sum + Math.abs(Number(entry.charges) || 0), 0);
+      $('#detail-date-badge').textContent = `${formatDate(dayKey)} · ${dayTrades.length} ${dayTrades.length === 1 ? 'trade' : 'trades'}`;
+      $('#detail-outcome-badge').textContent = 'DAY';
+      $('#detail-outcome-badge').className = 'text-xs font-black px-2.5 py-0.5 rounded-md border bg-sky-500/20 text-sky-300 border-sky-500/40';
+      $('#detail-archived-tag').classList.add('hidden');
+      $('#detail-net-pnl').textContent = `${net >= 0 ? '+' : ''}${formatCurrency(net)}`;
+      $('#detail-net-pnl').className = `text-3xl font-black font-mono-num tracking-tight mt-0.5 ${getPnlClass(net)}`;
+      $('#detail-gross-pnl').textContent = `${gross >= 0 ? '+' : ''}${formatCurrency(gross)}`;
+      $('#detail-charges').textContent = formatCurrency(charges);
+      $('#detail-notes').textContent = 'Select a trade below to open its full record.';
+      $('#detail-rules').textContent = `${dayTrades.filter(entry => TRADED.has(entry.trade_result)).length} traded entries`;
+      $('#calendar-day-trades-label').textContent = 'Trades for this day';
+      $('#calendar-day-trades-list').innerHTML = dayTrades.map(entry => {
+        const tradeNet = getNetValue(entry);
+        return `<button type="button" class="day-trade-row w-full text-left rounded-2xl bg-slate-900/60 border border-white/10 p-3" data-day-trade-id="${entry.id}"><div class="flex items-center justify-between gap-2"><span class="text-xs font-bold">${escapeHtml(entry.trade_result)}</span><b class="text-xs font-mono ${getPnlClass(tradeNet)}">${TRADED.has(entry.trade_result) ? `${tradeNet >= 0 ? '+' : ''}${formatCurrency(tradeNet)}` : 'Journal only'}</b></div><p class="mt-1 text-[11px] text-slate-400">${escapeHtml(entry.notes || 'No reflection logged.')}</p></button>`;
+      }).join('');
+      $('#calendar-day-trades').classList.remove('hidden');
+      $('#sheet-edit-btn').classList.add('hidden');
+      $('#sheet-archive-btn').classList.add('hidden');
+      $('#sheet-delete-btn').classList.add('hidden');
+      const backdrop = $('#detail-backdrop');
+      const sheet = $('#detail-sheet');
+      backdrop.classList.remove('hidden');
+      void backdrop.offsetWidth;
+      backdrop.classList.remove('opacity-0');
+      sheet.classList.remove('hidden', 'sheet-exit');
+      sheet.classList.add('sheet-enter');
+    }
+
     function closeDetailSheet() {
       triggerHaptic();
       const backdrop = $('#detail-backdrop');
@@ -2041,6 +2382,11 @@
         backdrop.classList.add('hidden');
         sheet.classList.add('hidden');
         currentDetailId = null;
+        calendarDayDetailOpen = false;
+        $('#calendar-day-trades').classList.add('hidden');
+        $('#sheet-edit-btn').classList.remove('hidden');
+        $('#sheet-archive-btn').classList.remove('hidden');
+        $('#sheet-delete-btn').classList.remove('hidden');
       }, 240);
     }
 
@@ -2188,6 +2534,21 @@
       toggle.setAttribute('aria-label', isLight ? 'Switch to dark theme' : 'Switch to light theme');
     }
 
+    function toggleChartFullscreen(targetId) {
+      const target = $(`#${targetId}`);
+      if (!target) return;
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.();
+      } else {
+        target.requestFullscreen?.();
+      }
+    }
+
+    function resizeInteractiveCharts() {
+      if (equityChart) equityChart.applyOptions({ width: $('#equity-container').clientWidth, height: $('#equity-container').clientHeight });
+      if (analysisChart) analysisChart.applyOptions({ width: $('#analysis-bars-chart').clientWidth, height: $('#analysis-bars-chart').clientHeight });
+    }
+
     function setupEventListeners() {
       // Bottom navigation tabs
       $$('.tab-btn, #quick-log-btn').forEach(btn => {
@@ -2201,6 +2562,19 @@
         const navTrigger = e.target.closest('.nav-trigger');
         if (navTrigger) {
           navigateToScreen(navTrigger.dataset.target);
+        }
+
+        const calendarDay = e.target.closest('[data-calendar-day]');
+        if (calendarDay) {
+          openCalendarDayDetails(calendarDay.dataset.calendarDay);
+          return;
+        }
+
+        const dayTrade = e.target.closest('[data-day-trade-id]');
+        if (dayTrade) {
+          closeDetailSheet();
+          openTradeDetail(dayTrade.dataset.dayTradeId);
+          return;
         }
 
         const detailRow = e.target.closest('.open-detail-row');
@@ -2321,7 +2695,16 @@
       $('#theme-toggle').addEventListener('click', () => {
         triggerHaptic();
         applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+        renderOverview();
+        renderCalendar();
       });
+      $$('.chart-action').forEach(button => {
+        button.addEventListener('click', () => {
+          triggerHaptic();
+          if (button.dataset.chartAction === 'fullscreen') toggleChartFullscreen(button.dataset.chartTarget);
+        });
+      });
+      document.addEventListener('fullscreenchange', () => requestAnimationFrame(resizeInteractiveCharts));
 
     }
 
