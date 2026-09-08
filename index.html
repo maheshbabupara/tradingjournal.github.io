@@ -110,6 +110,49 @@
       right: 8px;
       z-index: 5;
     }
+    .chart-ohlc-overlay {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      z-index: 5;
+      max-width: calc(100% - 16px);
+      padding: 5px 7px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.68);
+      color: #cbd5e1;
+      font: 10px 'JetBrains Mono', monospace;
+      pointer-events: none;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .ema-controls {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 6px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 9px;
+      background: rgba(15, 23, 42, 0.55);
+      color: #cbd5e1;
+      font: 10px 'JetBrains Mono', monospace;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .ema-controls label { display: flex; align-items: center; gap: 3px; }
+    .ema-controls input[type="number"] {
+      width: 38px;
+      padding: 2px 3px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 5px;
+      background: rgba(15, 23, 42, 0.55);
+      color: inherit;
+      font: inherit;
+    }
     .chart-action:active { transform: scale(.94); }
     #equity-chart-shell:fullscreen,
     #analysis-chart-shell:fullscreen {
@@ -549,6 +592,21 @@
       border-color: rgba(71, 85, 105, 0.25);
       color: #334155;
     }
+    :root[data-theme="light"] .chart-ohlc-overlay {
+      background: rgba(255, 255, 255, 0.88);
+      border-color: rgba(71, 85, 105, 0.25);
+      color: #334155;
+    }
+    :root[data-theme="light"] .ema-controls {
+      background: rgba(255, 255, 255, 0.82);
+      border-color: rgba(71, 85, 105, 0.25);
+      color: #334155;
+    }
+    :root[data-theme="light"] .ema-controls input[type="number"] {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(71, 85, 105, 0.25);
+      color: #17212b;
+    }
 
     :root[data-theme="light"] #screen-calendar .bg-slate-900\/90,
     :root[data-theme="light"] #screen-calendar .bg-slate-900\/80,
@@ -649,6 +707,10 @@
           </div>
           <div id="equity-chart-shell" class="relative w-full h-[190px] rounded-2xl bg-black/40 border border-white/5 overflow-hidden flex items-center justify-center">
             <button type="button" class="chart-action chart-fullscreen-button" data-chart-action="fullscreen" data-chart-target="equity-chart-shell" aria-label="Open equity chart fullscreen" title="Fullscreen">⛶</button>
+            <div class="ema-controls" aria-label="Equity EMA controls">
+              <label><input type="checkbox" class="ema-visible-toggle" checked> EMA</label>
+              <input type="number" class="ema-length-input" min="2" max="200" step="1" value="20" aria-label="EMA length">
+            </div>
             <div id="equity-container" class="w-full h-full"></div>
           </div>
         </div>
@@ -762,9 +824,13 @@
             <button data-chart-type="line" class="chart-type-toggle flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-emerald-500 text-slate-950">Line</button>
             <button data-chart-type="candle" class="chart-type-toggle flex-1 py-1.5 text-xs font-medium text-slate-400 rounded-lg transition-all hover:text-white">Candle</button>
           </div>
-          <div id="analysis-ohlc" class="hidden rounded-xl border border-white/10 bg-slate-900/40 px-3 py-2 text-[10px] font-mono text-slate-400" aria-live="polite">Hover a candle to see OHLC.</div>
           <div id="analysis-chart-shell" class="relative">
             <button type="button" class="chart-action chart-fullscreen-button" data-chart-action="fullscreen" data-chart-target="analysis-chart-shell" aria-label="Open calendar chart fullscreen" title="Fullscreen">⛶</button>
+            <div class="ema-controls" aria-label="Calendar EMA controls">
+              <label><input type="checkbox" class="ema-visible-toggle" checked> EMA</label>
+              <input type="number" class="ema-length-input" min="2" max="200" step="1" value="20" aria-label="EMA length">
+            </div>
+            <div id="analysis-ohlc" class="chart-ohlc-overlay hidden" aria-live="polite"></div>
             <div id="analysis-bars-chart" class="max-h-[460px] border-b border-white/10 overflow-y-auto overscroll-y-contain"></div>
           </div>
           <div id="analysis-breakdown-list" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
@@ -1107,6 +1173,8 @@
     let calendarChartZoom = 1;
     let equityChart = null;
     let analysisChart = null;
+    let emaVisible = localStorage.getItem('trade-ledger-ema-visible') !== 'false';
+    let emaLength = Math.max(2, Number(localStorage.getItem('trade-ledger-ema-length')) || 20);
     let selectedPeriod = localStorage.getItem('trade-ledger-period') || 'all';
     let customRange = JSON.parse(localStorage.getItem('trade-ledger-custom-range') || '{"start":"","end":""}');
     let currentDetailId = null;
@@ -1157,6 +1225,21 @@
     const formatDateTime = d => new Intl.DateTimeFormat('en-IN', {
       day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
     }).format(new Date(d));
+
+    function calculateEma(data, length) {
+      if (!data.length) return [];
+      const alpha = 2 / (length + 1);
+      let previous = data[0].value;
+      return data.map((point, index) => {
+        if (index > 0) previous = point.value * alpha + previous * (1 - alpha);
+        return { time: point.time, value: previous };
+      });
+    }
+
+    function syncEmaControls() {
+      $$('.ema-visible-toggle').forEach(input => { input.checked = emaVisible; });
+      $$('.ema-length-input').forEach(input => { input.value = emaLength; });
+    }
 
     const getNetValue = entry => {
       if (!TRADED.has(entry.trade_result)) return 0;
@@ -1521,6 +1604,10 @@
       });
       const series = equityChart.addAreaSeries({ lineColor: positive ? '#10b981' : '#f43f5e', topColor: positive ? 'rgba(16, 185, 129, 0.28)' : 'rgba(244, 63, 94, 0.28)', bottomColor: 'rgba(15, 23, 42, 0)', lineWidth: 2, priceLineVisible: true, lastValueVisible: true });
       series.setData(data);
+      if (emaVisible) {
+        const emaSeries = equityChart.addLineSeries({ color: '#f59e0b', lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: true });
+        emaSeries.setData(calculateEma(data, emaLength));
+      }
       equityChart.timeScale().fitContent();
       new ResizeObserver(() => equityChart?.applyOptions({ width: chartHost.clientWidth })).observe(chartHost);
       return;
@@ -1836,6 +1923,10 @@
       } else {
         analysisSeries = analysisChart.addLineSeries({ color: '#38bdf8', lineWidth: 2, priceLineVisible: true, lastValueVisible: true });
         analysisSeries.setData(data.map(item => ({ time: item.time, value: item.close })));
+      }
+      if (emaVisible) {
+        const emaSeries = analysisChart.addLineSeries({ color: '#f59e0b', lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: true });
+        emaSeries.setData(calculateEma(data.map(item => ({ time: item.time, value: item.close })), emaLength));
       }
       analysisChart.subscribeCrosshairMove(param => {
         const readout = $('#analysis-ohlc');
@@ -2678,6 +2769,24 @@
           renderCalendar();
         });
       });
+      $$('.ema-visible-toggle').forEach(input => {
+        input.addEventListener('change', event => {
+          emaVisible = event.target.checked;
+          localStorage.setItem('trade-ledger-ema-visible', String(emaVisible));
+          syncEmaControls();
+          renderOverview();
+          renderCalendar();
+        });
+      });
+      $$('.ema-length-input').forEach(input => {
+        input.addEventListener('change', event => {
+          emaLength = Math.max(2, Math.min(200, Number(event.target.value) || 20));
+          localStorage.setItem('trade-ledger-ema-length', String(emaLength));
+          syncEmaControls();
+          renderOverview();
+          renderCalendar();
+        });
+      });
       // Calendar month pagination
       $('#cal-prev-btn').addEventListener('click', () => {
         triggerHaptic();
@@ -2764,6 +2873,7 @@
       const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
       applyTheme(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : systemTheme);
       setupEventListeners();
+      syncEmaControls();
       $('#custom-range-start').value = customRange.start || '';
       $('#custom-range-end').value = customRange.end || '';
       updatePeriodControls();
