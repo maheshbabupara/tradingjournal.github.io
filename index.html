@@ -69,11 +69,12 @@
       width: 100%;
       min-height: 360px;
       overflow: hidden;
-      touch-action: pan-x pan-y;
+      touch-action: none;
       background: rgba(15, 23, 42, 0.24);
       border-radius: 18px;
       box-shadow: inset 0 1px rgba(255, 255, 255, 0.05);
     }
+    #equity-container { touch-action: none; }
 
     .calendar-chart-tooltip {
       position: absolute;
@@ -123,6 +124,23 @@
       height: 100% !important;
     }
     #analysis-chart-shell:fullscreen #analysis-bars-chart {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: none !important;
+    }
+    .mobile-chart-fullscreen {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 100 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      max-height: none !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      background: var(--bg) !important;
+    }
+    .mobile-chart-fullscreen #equity-container,
+    .mobile-chart-fullscreen #analysis-bars-chart {
       width: 100% !important;
       height: 100% !important;
       max-height: none !important;
@@ -1499,7 +1517,7 @@
         timeScale: { borderColor: chartBorder, timeVisible: false, rightOffset: 3 },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: '#38bdf8', width: 1, style: 2 }, horzLine: { color: '#38bdf8', width: 1, style: 2 } },
         handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
-        handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false }
+        handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true }
       });
       const series = equityChart.addAreaSeries({ lineColor: positive ? '#10b981' : '#f43f5e', topColor: positive ? 'rgba(16, 185, 129, 0.28)' : 'rgba(244, 63, 94, 0.28)', bottomColor: 'rgba(15, 23, 42, 0)', lineWidth: 2, priceLineVisible: true, lastValueVisible: true });
       series.setData(data);
@@ -1808,7 +1826,7 @@
         timeScale: { borderColor: chartBorder, timeVisible: false, rightOffset: 4 },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: '#38bdf8', width: 1, style: 2 }, horzLine: { color: '#38bdf8', width: 1, style: 2 } },
         handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
-        handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false }
+        handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true }
       });
       const data = chronological.map(group => ({ time: group.key, open: group.open, high: group.high, low: group.low, close: group.close }));
       let analysisSeries;
@@ -2539,14 +2557,39 @@
       if (!target) return;
       if (document.fullscreenElement) {
         document.exitFullscreen?.();
-      } else {
-        target.requestFullscreen?.();
+        return;
       }
+      if (target.classList.contains('mobile-chart-fullscreen')) {
+        target.classList.remove('mobile-chart-fullscreen');
+        document.body.style.overflow = '';
+        const button = target.querySelector('.chart-fullscreen-button');
+        if (button) button.textContent = '⛶';
+        requestAnimationFrame(resizeInteractiveCharts);
+        return;
+      }
+      const useFallback = !document.fullscreenEnabled || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (useFallback || !target.requestFullscreen) {
+        target.classList.add('mobile-chart-fullscreen');
+        document.body.style.overflow = 'hidden';
+        const button = target.querySelector('.chart-fullscreen-button');
+        if (button) button.textContent = '×';
+        requestAnimationFrame(resizeInteractiveCharts);
+        return;
+      }
+      target.requestFullscreen().catch(() => {
+        target.classList.add('mobile-chart-fullscreen');
+        document.body.style.overflow = 'hidden';
+        const button = target.querySelector('.chart-fullscreen-button');
+        if (button) button.textContent = '×';
+        requestAnimationFrame(resizeInteractiveCharts);
+      });
     }
 
     function resizeInteractiveCharts() {
-      if (equityChart) equityChart.applyOptions({ width: $('#equity-container').clientWidth, height: $('#equity-container').clientHeight });
-      if (analysisChart) analysisChart.applyOptions({ width: $('#analysis-bars-chart').clientWidth, height: $('#analysis-bars-chart').clientHeight });
+      const equityHost = $('#equity-container');
+      const analysisHost = $('#analysis-bars-chart');
+      if (equityChart) equityChart.applyOptions({ width: equityHost.clientWidth, height: equityHost.clientHeight });
+      if (analysisChart) analysisChart.applyOptions({ width: analysisHost.clientWidth, height: analysisHost.clientHeight });
     }
 
     function setupEventListeners() {
@@ -2704,7 +2747,10 @@
           if (button.dataset.chartAction === 'fullscreen') toggleChartFullscreen(button.dataset.chartTarget);
         });
       });
-      document.addEventListener('fullscreenchange', () => requestAnimationFrame(resizeInteractiveCharts));
+      document.addEventListener('fullscreenchange', () => requestAnimationFrame(() => {
+        document.querySelectorAll('.chart-fullscreen-button').forEach(button => { button.textContent = '⛶'; });
+        resizeInteractiveCharts();
+      }));
 
     }
 
